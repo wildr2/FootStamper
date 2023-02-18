@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Kittiestats</title>
+	<link rel="stylesheet" type="text/css" href="main.css">
+	<script src="draggable-div.js" defer></script>
+</head>
+<body>
+	<!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
+	<div id="player" class="yt_player"></div>
+	<div class="squad draggable">
+		<div class="draggable_header">Squad</div>
+		<ol id="squad" class="squad_list">
+			<li class="squad_item">Plato</li>
+			<li class="squad_item">Epiktet</li>
+			<li class="squad_item">Aristoteles</li>
+			<li class="squad_item">Sophokles</li>
+			<li class="squad_item">Empedokles Von Acraga</li>
+			<li class="squad_item">Plotin</li>
+			<li class="squad_item">Epikur</li>
+			<li class="squad_item">Heraklit</li>
+			<li class="squad_item">Demokrit</li>
+			<li class="squad_item">Sokrates</li>
+			<li class="squad_item">Archimedes</li>
+		</ol>
+	</div>
+	<div class="databox draggable">
+		<div class="draggable_header">Data</div>
+		<textarea id="textbox" class="databox_textarea" spellcheck="false"></textarea>
+	</div>
+
+	<script>
+		// 2. This code loads the IFrame Player API code asynchronously.
+		var tag = document.createElement('script');
+
+		tag.src = "https://www.youtube.com/iframe_api";
+		var firstScriptTag = document.getElementsByTagName('script')[0];
+		firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+		// 3. This function creates an <iframe> (and YouTube player)
+		//		after the API code downloads.
+		var player;
+		function onYouTubeIframeAPIReady() {
+			player = new YT.Player('player', {
+				width: '1280',
+				height: '720',
+				videoId: 'LfduUFF_i1A',
+				playerVars: {
+					'playsinline': 1
+				},
+				events: {
+					'onReady': onPlayerReady,
+					'onStateChange': onPlayerStateChange
+				}
+			});
+		}
+
+		// 4. The API will call this function when the video player is ready.
+		function onPlayerReady(event) {
+			event.target.playVideo();
+		}
+
+		// 5. The API calls this function when the player's state changes.
+		//		The function indicates that when playing a video (state=1),
+		//		the player should play for six seconds and then stop.
+		var done = false;
+		function onPlayerStateChange(event) {
+			// if (event.data == YT.PlayerState.PLAYING && !done) {
+				// setTimeout(stopVideo,/ 6000);
+				// done = true;
+			// }
+		}
+		function stopVideo() {
+			player.stopVideo();
+		}
+
+
+		var selectedPlayer = -1
+		var selectedPlayerTimeMs = -1
+
+		function getPlayer(index) {
+			if (index < 0) {
+				return null
+			}
+			let squad = document.getElementById("squad")
+			if (squad.children.length <= index) {
+				return null
+			}
+			return squad.children[index]
+		}
+
+		function getPlayerName(index) {
+			let player = getPlayer(index)
+			return player ? player.textContent : ""
+		}
+
+		function selectPlayer(index) {
+			let player = getPlayer(index)
+			if (!player){ 
+				return
+			}
+			let old_player = getPlayer(selectedPlayer)
+			if (old_player) {
+				old_player.classList.remove("squad_item--selected")
+			}
+			player.classList.add("squad_item--selected")
+			selectedPlayer = index
+			selectedPlayerTimeMs = Date.now()
+		}
+
+		function secondsToHHMMSS(seconds) {
+			return new Date(seconds * 1000).toISOString().slice(11, 19);
+		}
+
+		function onKeyPress(e) {
+			if (e.key == "k") {
+				if (player.getPlayerState() != 1) {
+					player.playVideo()
+				} else {
+					player.pauseVideo()
+				}
+			} else if (e.key == "j") {
+				player.seekTo(player.getCurrentTime() - 5)
+			} else if (e.key == "l") {
+				player.seekTo(player.getCurrentTime() + 5)
+			} else if (e.key == ",") {
+				player.seekTo(player.getCurrentTime() - 0.1)
+			} else if (e.key == ".") {
+				player.seekTo(player.getCurrentTime() + 0.1)
+			} else {
+				let numKey = parseInt(e.key)
+				if (!isNaN(numKey)) {
+					let timeSinceSelectPlayerMs = Date.now() - selectedPlayerTimeMs
+					if (timeSinceSelectPlayerMs < 500) {
+						let playerNum = parseInt((selectedPlayer + 1).toString() + numKey)
+						selectPlayer(playerNum - 1)
+					} else {
+						selectPlayer(numKey - 1)
+					}
+				}
+
+				if (/^[a-zA-Z]$/.test(e.key)) {
+					let textbox = document.getElementById("textbox")
+					if (textbox != document.activeElement) {
+						let time = secondsToHHMMSS(player.getCurrentTime())
+						let playerName = getPlayerName(selectedPlayer)
+						if (playerName) {
+							textbox.value += `${time}, ${playerName}, ${e.key}\n`
+							textbox.scrollTop = textbox.scrollHeight;
+						}
+					}
+				}
+			}
+		}
+		addEventListener("keypress", onKeyPress)
+
+		document.body.onfocus = (e) => {
+			document.body.classList.add("body_focused")
+		}
+		document.body.onblur = (e) => {
+			document.body.classList.remove("body_focused")
+		}
+
+	</script>
+</body>
+</html>

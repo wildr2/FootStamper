@@ -1,0 +1,160 @@
+@charset "UTF-8";
+/*---------------------------------------------------------------------------*/
+/*  01 Reset
+/*  02 Vars
+/*  03 Blocks
+/*  04 Elements
+/*  05 Modifiers
+/*  06 Misc
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/*  01 Reset
+/*---------------------------------------------------------------------------*/
+
+/* http://meyerweb.com/eric/tools/css/reset/
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1em;
+}
+ol, ul {
+	list-style: none;	
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+
+/*---------------------------------------------------------------------------*/
+/*  02 Vars
+/*---------------------------------------------------------------------------*/
+
+:root{
+	--color-bg: #000;
+	--color-text: #fff;
+	--color-popup-bg: #0000003d;
+	--color-popup-header: #0006;
+	--color-popup-border: #3e3e3e;
+	--color-selection-active: rgb(255, 107, 107);
+	--color-selection: #aaa;
+}
+
+
+/*---------------------------------------------------------------------------*/
+/*  03 Blocks
+/*---------------------------------------------------------------------------*/
+
+html {
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	font-family: "Segoe UI", Helvetica, sans-serif;
+}
+textarea {
+	color: var(--color-text);
+	font-family: "Segoe UI", Helvetica, sans-serif;
+	padding: 10px 10px 10px 10px;
+	width: 400px;
+}
+.yt_player {
+	width: 100%;
+	height: 90%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0	
+}
+.squad {
+	top: 100px;
+	left: 100px;
+}
+.squad_list {
+	padding: 10px 40px 10px 40px;
+	list-style: symbols;
+}
+.squad_item {
+	color: inherit;	
+}
+.databox {
+	top: 350px;
+	left: 100px;
+}
+.databox_textarea {
+	border: none;
+	margin: 0;
+	background: none;
+	width: 300px;
+	height: 400px;
+}
+.draggable {
+	position: absolute;
+	z-index: 9;
+	background: var(--color-popup-bg);
+	border: 1px solid var(--color-popup-border);
+}
+.draggable_header {
+	padding: 5px;
+	cursor: move;
+	z-index: 10;
+	background-color: var(--color-popup-header);
+	border-bottom: 1px solid var(--color-popup-border);
+}
+
+/*---------------------------------------------------------------------------*/
+/*  04 Elements
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/*  05 Modifiers
+/*---------------------------------------------------------------------------*/
+
+.squad_item--selected { 
+	color: var(--color-selection);
+	font-weight: bold;
+}
+.body_focused .squad_item--selected {
+	color: var(--color-selection-active);
+}
+
+/*---------------------------------------------------------------------------*/
+/*  06 Misc
+/*---------------------------------------------------------------------------*/
