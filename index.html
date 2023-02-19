@@ -8,6 +8,24 @@
 	<script src="draggable-div.js" defer></script>
 </head>
 <body>
+	<header class="header">
+		<div class="header__inner">
+			<h class="title">KITTIESTATS</h>
+			<textarea class="config_box" spellcheck="false"></textarea>
+			<ul style="width: 50%">
+				<li>j</li>
+				<li>k</li>
+				<li>l</li>
+				<li>numbers</li>
+				<li>other alpha keys</li>
+				<li>backward 5 seconds</li>
+				<li>play/pause</li>
+				<li>forward 5 seconds</li>
+				<li>select squad member</li>
+				<li>record event</li>
+			</ul>
+		</div>
+	</header>
 	<!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
 	<div id="player" class="yt_player"></div>
 	<div class="squad draggable">
@@ -162,6 +180,31 @@
 		document.body.onblur = (e) => {
 			document.body.classList.remove("body_focused")
 		}
+
+		let config_box = document.getElementsByClassName("config_box")[0]
+		config_box.oninput = (e) => {
+			config_box.style.height = ""
+			config_box.style.height = config_box.scrollHeight + "px"
+		}
+		config_box.value = `\
+https://www.youtube.com/watch?time_continue=6&v=LfduUFF_i1A&feature=emb_logo
+
+Squad
+	Plato
+	Epiktet
+	Aristoteles
+	Sophokles
+	Empedokles 
+	Plotin
+	Epikur
+	Heraklit
+	Demokrit
+	Sokrates
+	Archimedes
+Events
+	g, goal, GOAL!
+	a, assist, Assist`
+		config_box.oninput()
 
 	</script>
 </body>
