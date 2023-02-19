@@ -4,10 +4,12 @@
 <head>
 	<meta charset="utf-8">
 	<title>Kittiestats</title>
-	<link rel="stylesheet" type="text/css" href="main.css">
-	<script src="draggable-div.js" defer></script>
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+	<script type="module" src="./js/app.js"></script>
+	<script src="js/draggable-div.js" defer></script>
 </head>
 <body>
+	<data-recorder></data-recorder>
 	<header class="title-section">
 		<div class="title-section__inner">
 			<h class="title-section__title">KITTIESTATS</h>
@@ -33,204 +35,27 @@
 		</div>
 	</header>
 	<div class="video-section">
-		<!-- The <iframe> (and video player) will replace this <div> tag. -->
-		<div id="ytPlayer" class="video-section__player"></div>
+		<video-controller>
+			<!-- The <iframe> (and video player) will replace this tag. -->
+			<div id="player" class="video-section__player"></div>
+		</video-controller>
 		<div class="squad draggable">
 			<div class="draggable__handle">Squad</div>
-			<ol class="squad__list">
-				<li class="squad__item">Plato</li>
-				<li class="squad__item">Epiktet</li>
-				<li class="squad__item">Aristoteles</li>
-				<li class="squad__item">Sophokles</li>
-				<li class="squad__item">Empedokles Von Acraga</li>
-				<li class="squad__item">Plotin</li>
-				<li class="squad__item">Epikur</li>
-				<li class="squad__item">Heraklit</li>
-				<li class="squad__item">Demokrit</li>
-				<li class="squad__item">Sokrates</li>
-				<li class="squad__item">Archimedes</li>
-			</ol>
+			<ol class="squad__list"></ol>
 		</div>
 		<div class="databox draggable">
 			<div class="draggable__handle">Data</div>
 			<textarea class="databox__textarea" spellcheck="false"></textarea>
 		</div>
 	</div>
-
 	<script>
-		// Loads the IFrame Player API code asynchronously.
-		var tag = document.createElement("script");
-
-		tag.src = "https://www.youtube.com/iframe_api";
-		var firstScriptTag = document.getElementsByTagName("script")[0];
-		firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-		// Creates an <iframe> (and YouTube player)
-		//		after the API code downloads.
-		var ytPlayer;
-		function onYouTubeIframeAPIReady() {
-			ytPlayer = new YT.Player("ytPlayer", {
-				width: "1280",
-				height: "720",
-				videoId: "LfduUFF_i1A",
-				playerVars: {
-					"playsinline": 1
-				},
-				events: {
-					"onReady": onPlayerReady,
-					"onStateChange": onPlayerStateChange
-				}
-			});
-		}
-
-		// Called by YT API. Function must be defined.
-		function onPlayerReady(event) {
-		}
-
-		// Called by YT API. Function must be defined.
-		function onPlayerStateChange(event) {
-		}
-
-		var selectedMateIndex = -1
-		var selectedMateTimeMs = -1
-
-		function getMate(index) {
-			if (index < 0) {
-				return null
-			}
-			let squadList = document.getElementsByClassName("squad__list")[0]
-			if (squadList.children.length <= index) {
-				return null
-			}
-			return squadList.children[index]
-		}
-
-		// function getSelectedMate() {
-		// 	let selectedMates = document.getElementsByClassName("squad__item--selected")
-		// 	return selectedMates.length > 0 ? selectedMates[0] : null
-		// }
-
-		// function getMateIndex(mate) {
-			
-		// }
-
-		function getMateName(index) {
-			let mate = getMate(index)
-			return mate ? mate.textContent : ""
-		}
-
-		function selectMate(index) {
-			let mate = getMate(index)
-			if (!mate){ 
-				return
-			}
-			let oldMate = getMate(selectedMateIndex)
-			if (oldMate) {
-				oldMate.classList.remove("squad__item--selected")
-			}
-			mate.classList.add("squad__item--selected")
-			selectedMateIndex = index
-			selectedMateTimeMs = Date.now()
-		}
-
-		function secondsToHHMMSS(seconds) {
-			return new Date(seconds * 1000).toISOString().slice(11, 19);
-		}
-
-		function onKeyPress(e) {
-			if (e.key == "k") {
-				if (ytPlayer.getPlayerState() != 1) {
-					ytPlayer.playVideo()
-				} else {
-					ytPlayer.pauseVideo()
-				}
-			} else if (e.key == "j") {
-				ytPlayer.seekTo(ytPlayer.getCurrentTime() - 5)
-			} else if (e.key == "l") {
-				ytPlayer.seekTo(ytPlayer.getCurrentTime() + 5)
-			} else if (e.key == ",") {
-				ytPlayer.seekTo(ytPlayer.getCurrentTime() - 0.1)
-			} else if (e.key == ".") {
-				ytPlayer.seekTo(ytPlayer.getCurrentTime() + 0.1)
-			} else {
-				let numKey = parseInt(e.key)
-				if (!isNaN(numKey)) {
-					let timeSinceSelectMateMs = Date.now() - selectedMateTimeMs
-					if (timeSinceSelectMateMs < 500) {
-						let mateNum = parseInt((selectedMateIndex + 1).toString() + numKey)
-						let mateIndex = mateNum - 1
-						selectMate(mateIndex)
-					} else {
-						let mateIndex = numKey - 1
-						selectMate(mateIndex)
-					}
-				}
-
-				if (/^[a-zA-Z]$/.test(e.key)) {
-					let databox = document.getElementsByClassName("databox__textarea")[0]
-					if (databox != document.activeElement) {
-						let time = secondsToHHMMSS(ytPlayer.getCurrentTime())
-						let mateName = getMateName(selectedMateIndex)
-						if (mateName) {
-							databox.value += `${time}, ${mateName}, ${e.key}\n`
-							databox.scrollTop = databox.scrollHeight;
-						}
-					}
-				}
-			}
-		}
-		addEventListener("keypress", onKeyPress)
-
+		// Allow css to select based on whether body has focus.
 		document.body.onfocus = (e) => {
-			document.body.classList.add("body-focused")
+			document.body.classList.add("body-focused");
 		}
 		document.body.onblur = (e) => {
-			document.body.classList.remove("body-focused")
+			document.body.classList.remove("body-focused");
 		}
-
-		let configBox = document.getElementsByClassName("title-section__config")[0]
-		configBox.oninput = (e) => {
-			configBox.style.height = ""
-			configBox.style.height = configBox.scrollHeight + "px"
-		}
-		configBox.value = `\
-https://www.youtube.com/watch?time_continue=6&v=LfduUFF_i1A&feature=emb_logo
-
-Squad
-	Plato
-	Epiktet
-	Aristoteles
-	Sophokles
-	Empedokles
-	Plotin
-	Epikur
-	Heraklit
-	Demokrit
-	Sokrates
-	Archimedes
-Events
-	g, goal, GOAL!
-	a, assist, Assist`
-
-		// Autosize config box to initial text.
-		configBox.oninput()
-
-		configBox.addEventListener("keydown", function(e) {
-			if (e.key == "Tab") {
-				e.preventDefault();
-				var start = this.selectionStart;
-				var end = this.selectionEnd;
-
-				// set textarea value to: text before caret + tab + text after caret
-				this.value = this.value.substring(0, start) +
-				"\t" + this.value.substring(end);
-
-				// put caret at right position again
-				this.selectionStart =
-				this.selectionEnd = start + 1;
-			}
-		});
-
 	</script>
 </body>
 </html>

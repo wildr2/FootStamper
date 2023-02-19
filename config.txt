@@ -1,0 +1,18 @@
+https://www.youtube.com/watch?time_continue=6&v=LfduUFF_i1A&feature=emb_logo
+
+Squad
+	Plato
+	Epiktet
+	Aristoteles
+	Sophokles
+	Empedokles
+	Plotin
+	Epikur
+	Heraklit
+	Demokrit
+	Sokrates
+	Archimedes
+
+Events
+	g, goal, GOAL!
+	a, assist, Assist
