@@ -11,42 +11,49 @@
 	<header class="header">
 		<div class="header__inner">
 			<h class="title">KITTIESTATS</h>
+			<p>Basic match event gathering tool. Or record timestamps for whatever.</p>
 			<textarea class="config_box" spellcheck="false"></textarea>
 			<ul style="width: 50%">
 				<li>j</li>
 				<li>k</li>
 				<li>l</li>
+				<li>,</li>
+				<li>.</li>
 				<li>numbers</li>
 				<li>other alpha keys</li>
-				<li>backward 5 seconds</li>
+				<li>back 5 seconds</li>
 				<li>play/pause</li>
 				<li>forward 5 seconds</li>
+				<li>back 1 frame</li>
+				<li>forward 1 frame</li>
 				<li>select squad member</li>
 				<li>record event</li>
 			</ul>
 		</div>
 	</header>
-	<!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
-	<div id="player" class="yt_player"></div>
-	<div class="squad draggable">
-		<div class="draggable_header">Squad</div>
-		<ol id="squad" class="squad_list">
-			<li class="squad_item">Plato</li>
-			<li class="squad_item">Epiktet</li>
-			<li class="squad_item">Aristoteles</li>
-			<li class="squad_item">Sophokles</li>
-			<li class="squad_item">Empedokles Von Acraga</li>
-			<li class="squad_item">Plotin</li>
-			<li class="squad_item">Epikur</li>
-			<li class="squad_item">Heraklit</li>
-			<li class="squad_item">Demokrit</li>
-			<li class="squad_item">Sokrates</li>
-			<li class="squad_item">Archimedes</li>
-		</ol>
-	</div>
-	<div class="databox draggable">
-		<div class="draggable_header">Data</div>
-		<textarea id="textbox" class="databox_textarea" spellcheck="false"></textarea>
+	<div class="video_section">
+		<!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
+		<div id="player" class="yt_player"></div>
+		<div class="squad draggable">
+			<div class="draggable_header">Squad</div>
+			<ol id="squad" class="squad_list">
+				<li class="squad_item">Plato</li>
+				<li class="squad_item">Epiktet</li>
+				<li class="squad_item">Aristoteles</li>
+				<li class="squad_item">Sophokles</li>
+				<li class="squad_item">Empedokles Von Acraga</li>
+				<li class="squad_item">Plotin</li>
+				<li class="squad_item">Epikur</li>
+				<li class="squad_item">Heraklit</li>
+				<li class="squad_item">Demokrit</li>
+				<li class="squad_item">Sokrates</li>
+				<li class="squad_item">Archimedes</li>
+			</ol>
+		</div>
+		<div class="databox draggable">
+			<div class="draggable_header">Data</div>
+			<textarea id="textbox" class="databox_textarea" spellcheck="false"></textarea>
+		</div>
 	</div>
 
 	<script>
@@ -194,7 +201,7 @@ Squad
 	Epiktet
 	Aristoteles
 	Sophokles
-	Empedokles 
+	Empedokles
 	Plotin
 	Epikur
 	Heraklit
@@ -204,7 +211,25 @@ Squad
 Events
 	g, goal, GOAL!
 	a, assist, Assist`
+
+		// Autosize config box to initial text.
 		config_box.oninput()
+
+		config_box.addEventListener('keydown', function(e) {
+			if (e.key == 'Tab') {
+				e.preventDefault();
+				var start = this.selectionStart;
+				var end = this.selectionEnd;
+
+				// set textarea value to: text before caret + tab + text after caret
+				this.value = this.value.substring(0, start) +
+				"\t" + this.value.substring(end);
+
+				// put caret at right position again
+				this.selectionStart =
+				this.selectionEnd = start + 1;
+			}
+		});
 
 	</script>
 </body>

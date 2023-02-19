@@ -125,6 +125,11 @@ ul {
 .title {
 	font-weight: bold;
 	font-size: 1.5em;
+	display: inline-block;
+	margin-bottom: 15px;
+}
+.video_section {
+	position: relative;
 }
 .yt_player {
 	width: 100%;
@@ -132,7 +137,7 @@ ul {
 	top: 30%;
 }
 .squad {
-	top: 40%;
+	top: 100px;
 	left: 30px;
 }
 .squad_list {
@@ -143,7 +148,7 @@ ul {
 	color: inherit;	
 }
 .databox {
-	top: 62%;
+	top: 400px;
 	left: 30px;
 }
 .databox_textarea {
