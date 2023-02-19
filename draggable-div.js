@@ -9,7 +9,7 @@ for (let draggable of draggables) {
 function dragElement(element) {
 	var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 	var child = element.children[0]
-	var handle = child && child.classList.contains("draggable_header") ? child : element
+	var handle = child && child.classList.contains("draggable__handle") ? child : element
 	handle.addEventListener("mousedown", dragMouseDown);
 
 	function dragMouseDown(e) {
