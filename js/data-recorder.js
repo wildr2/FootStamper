@@ -163,7 +163,7 @@ export class DataRecorder extends HTMLElement {
 				if (this.databox.value.length > 0) {
 					this.databox.value += "\n";
 				}
-				this.databox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}\n` : "");
+				this.databox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}` : "");
 				this.databox.scrollTop = this.databox.scrollHeight;
 			}
 		}
