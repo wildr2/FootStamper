@@ -4,11 +4,18 @@ export class DataRecorder extends HTMLElement {
 		super();
 		this.selectedMateIndex = -1;
 		this.selectedMateTimeMs = -1;
-		this.squadmates = [];
+
 		this.videoId = "";
-		this.configBox = document.getElementsByClassName("title-section__config")[0];
+		// names
+		this.squadmates = [];
+		// { key, name }, eg. { "g", "goal" }
+		this.dataEvents = [];
 		// args: dataRecorder
 		this.configChangedCallbacks = [];
+		this.configBox = document.getElementsByClassName("title-section__config")[0];
+
+		this.databox = document.getElementsByClassName("databox__textarea")[0];
+
 		this.#init();
 	}
 
@@ -52,7 +59,7 @@ export class DataRecorder extends HTMLElement {
 		fetch('config.txt')
 			.then(response => response.text())
 			.then(text => {
-				this.configBox.value = text;
+				this.configBox.textContent = text;
 				this.#parseConfigBox();
 			});
 
@@ -62,30 +69,44 @@ export class DataRecorder extends HTMLElement {
 
 	#parseConfigBox() {
 		// Video Url.
-		const video_id_regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/gi;	
-		let m = video_id_regex.exec(this.configBox.value);
-		if (m.length > 1) {
+		const videoIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/gi;	
+		let m = videoIdRegex.exec(this.configBox.value);
+		if (m && m.length > 1) {
 			this.videoId = m[1];
 		}	
 		
 		// Squad list.
 		this.squadmates = []
-		const squad_regex = /^Squad\n((\t|\s).*\n*)*/gm;
-		m = squad_regex.exec(this.configBox.value);
-		let lines = m.length > 0 ? m[0].split("\n") : [];
+		const squadRegex = /^Squad\n((\t|\s).*\n*)*/gm;
+		m = squadRegex.exec(this.configBox.value);
+		let lines = m && m.length > 0 ? m[0].split("\n") : [];
 		for (let i = 1; i < lines.length; ++i) {
-			if (lines[i].length > 0) {
+			let line = lines[i].trim();
+			if (line.length > 0) {
 				this.squadmates.push(lines[i].trim());
 			}
 		}
-		this.selectedMateIndex = -1
-		this.#updateViewSquadSelection();
-		this.#updateViewSquadList();
+		this.selectedMateIndex = -1;
 
-		// Match events.
+		// Data events.
+		this.dataEvents = {};
+		const eventsRegex = /^Events\n((\t|\s).*\n*)*/gm;
+		m = eventsRegex.exec(this.configBox.value);
+		lines = m && m.length > 0 ? m[0].split("\n") : [];
+		for (let i = 1; i < lines.length; ++i) {
+			let values = lines[i].split(",");
+			let key = values.length > 0 ? values[0].trim() : "";
+			if (key.length > 0) {
+				this.dataEvents[key] = values.length > 1 ? values[1].trim() : "";	
+			}
+		}
 
 		// Callbacks.
 		this.configChangedCallbacks.forEach(callback => callback(this));
+
+		// View.
+		this.#updateViewSquadSelection();
+		this.#updateViewSquadList();
 	}
 
 	#getMateName(index) {
@@ -107,16 +128,16 @@ export class DataRecorder extends HTMLElement {
 
 	#onKeyPress(e) {
 		// Select squadmate.
-		let numKey = parseInt(e.key)
+		let numKey = parseInt(e.key);
 		if (!isNaN(numKey)) {
-			let timeSinceSelectMateMs = Date.now() - this.selectedMateTimeMs
+			let timeSinceSelectMateMs = Date.now() - this.selectedMateTimeMs;
 			if (timeSinceSelectMateMs < 500) {
-				let mateNum = parseInt((this.selectedMateIndex + 1).toString() + numKey)
-				let mateIndex = mateNum - 1
-				this.#selectMate(mateIndex)
+				let mateNum = parseInt((this.selectedMateIndex + 1).toString() + numKey);
+				let mateIndex = mateNum - 1;
+				this.#selectMate(mateIndex);
 			} else {
-				let mateIndex = numKey - 1
-				this.#selectMate(mateIndex)
+				let mateIndex = numKey - 1;
+				this.#selectMate(mateIndex);
 			}
 			
 		// Ignore alpha keys reserved for other hotkeys.
@@ -124,16 +145,16 @@ export class DataRecorder extends HTMLElement {
 
 		// Record event.
 		} else if (/^[a-zA-Z]$/.test(e.key)) {
-			let databox = document.getElementsByClassName("databox__textarea")[0]
-			if (databox != document.activeElement) {
-				// Ignore hotkey while typing in the data box.
-				let ytPlayer = document.getElementsByTagName("video-controller")[0].ytPlayer
-				let time = ytPlayer ? this.#secondsToHHMMSS(ytPlayer.getCurrentTime()) : 0
-				let mateName = this.#getMateName(this.selectedMateIndex)
-				if (mateName) {
-					databox.value += `${time}, ${mateName}, ${e.key}\n`
-					databox.scrollTop = databox.scrollHeight;
-				}
+			// Ignore hotkey while typing in the config or data boxes.
+			if (document.activeElement.tagName != "TEXTAREA") {
+				let ytPlayer = document.getElementsByTagName("video-controller")[0].ytPlayer;
+
+				let time = ytPlayer ? this.#secondsToHHMMSS(ytPlayer.getCurrentTime()) : 0;
+				let eventName = this.dataEvents[e.key] || (e.key in this.dataEvents ? "" : e.key);
+				let mateName = this.#getMateName(this.selectedMateIndex);
+
+				this.databox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}\n` : "\n");
+				this.databox.scrollTop = this.databox.scrollHeight;
 			}
 		}
 	}
@@ -143,14 +164,14 @@ export class DataRecorder extends HTMLElement {
 		for (let i = 0; i < selectedMates.length; ++i) {
 			selectedMates[i].classList.remove("squad__item--selected");
 		}
-		let squadList = document.getElementsByClassName("squad__list")[0]
+		let squadList = document.getElementsByClassName("squad__list")[0];
 		if (this.selectedMateIndex >= 0 && this.selectedMateIndex < squadList.children.length) {
 			squadList.children[this.selectedMateIndex].classList.add("squad__item--selected");
 		}
 	}
 
 	#updateViewSquadList() {
-		let squadList = document.getElementsByClassName("squad__list")[0]
+		let squadList = document.getElementsByClassName("squad__list")[0];
 		squadList.replaceChildren();
 		for (let name of this.squadmates) {
 			let item = document.createElement("li");

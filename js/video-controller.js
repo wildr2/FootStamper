@@ -46,7 +46,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	#onConfigChanged(dataRecorder) {
-		if (this.ytPlayer) {
+		if (this.ytPlayer && this.ytPlayer.getVideoData) {
 			let oldVideoId = this.ytPlayer.getVideoData()['video_id'];
 			let newVideoId = dataRecorder.videoId;
 			if (newVideoId != oldVideoId) {
