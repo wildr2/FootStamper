@@ -88,11 +88,12 @@ table {
 	font-weight: bold;
 	font-size: 1.5em;
 	display: inline-block;
-	margin-bottom: 15px;
+	margin-bottom: 20px;
 }
 .title-section__config {
 	background-color: #000;
-	border: 1px solid var(--color-popup-border);
+	border: none;
+	border-radius: 5px;
 	width: 100%;
 	resize: none;
 	margin: 20px 0px 10px 0px;
