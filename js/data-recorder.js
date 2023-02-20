@@ -151,13 +151,13 @@ export class DataRecorder extends HTMLElement {
 		} else if (/^j|k|l$/.test(e.key)) {
 
 		// Record event.
-		} else if (/^[a-zA-Z]$/.test(e.key)) {
+		} else if (/^[a-zA-Z]$/.test(e.key) && e.key in this.dataEvents) {
 			// Ignore hotkey while typing in the config or data boxes.
 			if (document.activeElement.tagName != "TEXTAREA") {
 				let ytPlayer = document.getElementsByTagName("video-controller")[0].ytPlayer;
 
 				let time = ytPlayer ? this.#secondsToHHMMSS(ytPlayer.getCurrentTime()) : 0;
-				let eventName = this.dataEvents[e.key] || (e.key in this.dataEvents ? "" : e.key);
+				let eventName = this.dataEvents[e.key] || "";
 				let mateName = this.#getMateName(this.selectedMateIndex);
 
 				if (this.databox.value.length > 0) {
