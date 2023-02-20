@@ -1,3 +1,4 @@
+import { DataRecorder } from "./data-recorder.js"
 
 export class VideoController extends HTMLElement {
 	constructor() {
@@ -17,8 +18,6 @@ export class VideoController extends HTMLElement {
 		//		after the API code downloads.
 		window.onYouTubeIframeAPIReady = () => {
 			this.ytPlayer = new YT.Player("player", {
-				width: "1280",
-				height: "720",
 				videoId: "LfduUFF_i1A",
 				playerVars: {
 					"playsinline": 1
@@ -39,6 +38,21 @@ export class VideoController extends HTMLElement {
 		};
 
 		addEventListener("keypress", this.#onKeyPress.bind(this));
+
+		// Handle config changes.
+		let dataRecorder = document.getElementsByTagName("data-recorder")[0];
+		console.log(dataRecorder.subscribeConfigChanged);
+		dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
+	}
+
+	#onConfigChanged(dataRecorder) {
+		if (this.ytPlayer) {
+			let oldVideoId = this.ytPlayer.getVideoData()['video_id'];
+			let newVideoId = dataRecorder.videoId;
+			if (newVideoId != oldVideoId) {
+				this.ytPlayer.loadVideoById(newVideoId);
+			}
+		}	
 	}
 
 	#onKeyPress(e) {

@@ -1,12 +1,19 @@
 
-export class Recorder extends HTMLElement {
+export class DataRecorder extends HTMLElement {
 	constructor() {
 		super();
 		this.selectedMateIndex = -1;
 		this.selectedMateTimeMs = -1;
 		this.squadmates = [];
+		this.videoId = "";
 		this.configBox = document.getElementsByClassName("title-section__config")[0];
+		// args: dataRecorder
+		this.configChangedCallbacks = [];
 		this.#init();
+	}
+
+	subscribeConfigChanged(callback) {
+		this.configChangedCallbacks.push(callback);
 	}
 
 	#init() {
@@ -49,14 +56,22 @@ export class Recorder extends HTMLElement {
 				this.#parseConfigBox();
 			});
 
-		// Respond to config changes.
+		// Handle config changes.
 		this.configBox.onchange = this.#parseConfigBox.bind(this);
 	}
 
 	#parseConfigBox() {
+		// Video Url.
+		const video_id_regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/gi;	
+		let m = video_id_regex.exec(this.configBox.value);
+		if (m.length > 1) {
+			this.videoId = m[1];
+		}	
+		
+		// Squad list.
 		this.squadmates = []
 		const squad_regex = /^Squad\n((\t|\s).*\n*)*/gm;
-		let m = squad_regex.exec(this.configBox.value);
+		m = squad_regex.exec(this.configBox.value);
 		let lines = m.length > 0 ? m[0].split("\n") : [];
 		for (let i = 1; i < lines.length; ++i) {
 			if (lines[i].length > 0) {
@@ -66,6 +81,11 @@ export class Recorder extends HTMLElement {
 		this.selectedMateIndex = -1
 		this.#updateViewSquadSelection();
 		this.#updateViewSquadList();
+
+		// Match events.
+
+		// Callbacks.
+		this.configChangedCallbacks.forEach(callback => callback(this));
 	}
 
 	#getMateName(index) {
@@ -141,4 +161,4 @@ export class Recorder extends HTMLElement {
 	}
 }
 
-export const registerRecorder = () => customElements.define('data-recorder', Recorder);
+export const registerDataRecorder = () => customElements.define('data-recorder', DataRecorder);
