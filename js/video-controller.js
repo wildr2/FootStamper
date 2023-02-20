@@ -41,7 +41,6 @@ export class VideoController extends HTMLElement {
 
 		// Handle config changes.
 		let dataRecorder = document.getElementsByTagName("data-recorder")[0];
-		console.log(dataRecorder.subscribeConfigChanged);
 		dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
 	}
 

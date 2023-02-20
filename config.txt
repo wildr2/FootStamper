@@ -14,5 +14,7 @@ Squad
 	Archimedes
 
 Events
-	g, goal, GOAL!
-	a, assist, Assist
+	g, goal
+	a, assist
+	S, shot_on, (shot on target)
+	s, shot_off, (shot off target)

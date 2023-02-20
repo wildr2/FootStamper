@@ -24,13 +24,14 @@ export class DataRecorder extends HTMLElement {
 	}
 
 	#init() {
-		addEventListener("keypress", this.#onKeyPress.bind(this));
+		addEventListener("keydown", this.#onKeyDown.bind(this));
 		this.#initConfigBox();
 	}
 
 	#initConfigBox() {
 		// Set initial height -- avoid issues with delay autosizing initially.
-		this.configBox.style.height = "410px";
+		// TODO: not correct on all browsers.
+		this.configBox.style.height = "453px";
 
 		// Autosize config box.
 		this.configBox.oninput = (e) => {
@@ -77,7 +78,7 @@ export class DataRecorder extends HTMLElement {
 		
 		// Squad list.
 		this.squadmates = []
-		const squadRegex = /^Squad\n((\t|\s).*\n*)*/gm;
+		const squadRegex = /^Squad\n([^\S\r\n].*\n*)*/gm;
 		m = squadRegex.exec(this.configBox.value);
 		let lines = m && m.length > 0 ? m[0].split("\n") : [];
 		for (let i = 1; i < lines.length; ++i) {
@@ -126,7 +127,9 @@ export class DataRecorder extends HTMLElement {
 		return new Date(seconds * 1000).toISOString().slice(11, 19);
 	}
 
-	#onKeyPress(e) {
+	#onKeyDown(e) {
+		console.log(e);
+
 		// Select squadmate.
 		let numKey = parseInt(e.key);
 		if (!isNaN(numKey)) {
@@ -139,6 +142,10 @@ export class DataRecorder extends HTMLElement {
 				let mateIndex = numKey - 1;
 				this.#selectMate(mateIndex);
 			}
+		
+		// Delete last data line.
+		} else if (e.key == "Delete") {
+			this.databox.value = this.databox.value.replace(/\r?\n?[^\r\n]*$/, "");	
 			
 		// Ignore alpha keys reserved for other hotkeys.
 		} else if (/^j|k|l$/.test(e.key)) {
@@ -153,7 +160,10 @@ export class DataRecorder extends HTMLElement {
 				let eventName = this.dataEvents[e.key] || (e.key in this.dataEvents ? "" : e.key);
 				let mateName = this.#getMateName(this.selectedMateIndex);
 
-				this.databox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}\n` : "\n");
+				if (this.databox.value.length > 0) {
+					this.databox.value += "\n";
+				}
+				this.databox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}\n` : "");
 				this.databox.scrollTop = this.databox.scrollHeight;
 			}
 		}
@@ -179,6 +189,9 @@ export class DataRecorder extends HTMLElement {
 			item.textContent = name;
 			squadList.appendChild(item);
 		}
+
+		let squad = document.getElementsByClassName("squad")[0];
+		squad.classList.toggle("squad--hidden", this.squadmates.length == 0);
 	}
 }
 

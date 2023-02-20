@@ -139,6 +139,9 @@ table {
 .body-focused .squad__item--selected {
 	color: var(--color-selection-active);
 }
+.squad--hidden {
+	display: none;	
+}
 
 /*---------------------------------------------------------------------------*/
 /*	databox
@@ -147,6 +150,7 @@ table {
 .databox {
 	top: 400px;
 	left: 30px;
+	font-size: 1em;
 }
 .databox__textarea {
 	border: none;
