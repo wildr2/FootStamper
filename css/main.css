@@ -62,7 +62,8 @@ table {
 	--color-header-bg: #2d5834;
 	--color-text: #fff;
 	--color-popup-bg: #0000003d;
-	--color-popup-header: #0006;
+	--color-popup-header: #0000;
+	--color-popup-header-active: #0006;
 	--color-popup-border: #3e3e3e;
 	--color-selection-active: #54dd6b;
 	--color-selection: #aaa;
@@ -182,6 +183,9 @@ table {
 	z-index: 10;
 	background-color: var(--color-popup-header);
 	border-bottom: 1px solid var(--color-popup-border);
+}
+.body-focused .draggable__handle {
+	background-color: var(--color-popup-header-active);
 }
 
 /*---------------------------------------------------------------------------*/
