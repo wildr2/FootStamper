@@ -29,15 +29,17 @@ export class DataRecorder extends HTMLElement {
 	}
 
 	#initConfigBox() {
-		// Set initial height -- avoid issues with delay autosizing initially.
-		// TODO: not correct on all browsers.
-		this.configBox.style.height = "453px";
-
 		// Autosize config box.
 		this.configBox.oninput = (e) => {
-			this.configBox.style.height = "";
-			this.configBox.style.height = this.configBox.scrollHeight + "px";
+			this.configBox.style.height = 0;
+			let computedStyle = getComputedStyle(this.configBox);
+			let padding = parseFloat(computedStyle.paddingTop) + parseFloat(computedStyle.paddingBottom);
+			this.configBox.style.height = (this.configBox.scrollHeight - padding) + "px";
 		};
+		if (this.configBox.value.length > 0) {
+			// Initially auto-size to cached text.
+			this.configBox.oninput();
+		}
 
 		// Allow typing tab in config box.
 		this.configBox.addEventListener("keydown", function(e) {
@@ -46,26 +48,20 @@ export class DataRecorder extends HTMLElement {
 				let start = this.selectionStart;
 				let end = this.selectionEnd;
 
-				// set textarea value to: text before caret + tab + text after caret
+				// Set textarea value to: text before caret + tab + text after caret.
 				this.value = this.value.substring(0, start) +
 					"\t" + this.value.substring(end);
 
-				// put caret at right position again
+				// Put caret at right position again.
 				this.selectionStart =
 				this.selectionEnd = start + 1;
 			}
 		});
 
-		// Set default config.
-		fetch('config.txt')
-			.then(response => response.text())
-			.then(text => {
-				this.configBox.textContent = text;
-				this.#parseConfigBox();
-			});
-
 		// Handle config changes.
 		this.configBox.onchange = this.#parseConfigBox.bind(this);
+
+		this.#parseConfigBox();
 	}
 
 	#parseConfigBox() {
@@ -128,8 +124,6 @@ export class DataRecorder extends HTMLElement {
 	}
 
 	#onKeyDown(e) {
-		console.log(e);
-
 		// Select squadmate.
 		let numKey = parseInt(e.key);
 		if (!isNaN(numKey)) {
@@ -195,4 +189,4 @@ export class DataRecorder extends HTMLElement {
 	}
 }
 
-export const registerDataRecorder = () => customElements.define('data-recorder', DataRecorder);
+export const registerDataRecorder = () => customElements.define("data-recorder", DataRecorder);
