@@ -83,7 +83,7 @@ table {
 .title-section__inner {
 	width: var(--inner-width);
 	margin: auto;
-	padding: 20px 0px 20px 0px;
+	padding: 20px 0px 25px 0px;
 }
 .title-section__title {
 	font-weight: bold;
@@ -92,6 +92,7 @@ table {
 	margin-bottom: 20px;
 }
 .title-section__config {
+	display: block;
 	background-color: #000;
 	border: none;
 	border-radius: 5px;
@@ -100,7 +101,6 @@ table {
 	font-size: 1em;
 	line-height: 1.3em;
 	resize: none;
-	margin: 20px 0px 10px 0px;
 	overflow-y: hidden;
 }
 .title-section__hotkeys {
@@ -205,4 +205,8 @@ textarea {
 	font-family: "Segoe UI", Helvetica, sans-serif;
 	padding: 10px;
 	border: none;
+}
+.github-link {
+	width: 18px;	
+	height: 18px;	
 }
