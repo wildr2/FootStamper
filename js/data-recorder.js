@@ -15,6 +15,7 @@ export class DataRecorder extends HTMLElement {
 		this.configBox = document.getElementsByClassName("title-section__config")[0];
 
 		this.databox = document.getElementsByClassName("databox__textarea")[0];
+		this.showOverlayCheckbox = document.getElementById("show-overlay-checkbox");
 
 		this.#init();
 	}
@@ -26,9 +27,19 @@ export class DataRecorder extends HTMLElement {
 	#init() {
 		addEventListener("keydown", this.#onKeyDown.bind(this));
 		this.#initConfigBox();
+		this.showOverlayCheckbox.onchange = this.#optionsChanged.bind(this);
 	}
 
 	#initConfigBox() {
+		// Write url video ID to config.
+		let params = new URLSearchParams(location.search);
+		let urlVideoId = params.get("v");
+		if (urlVideoId != null && urlVideoId.length > 0) {
+			let lines = this.configBox.value.split("\n");
+			lines[0] = `https://www.youtube.com/watch?v=${urlVideoId}`;
+			this.configBox.value = lines.join("\n");
+		}
+		
 		// Autosize config box.
 		this.configBox.oninput = (e) => {
 			this.configBox.style.height = 0;
@@ -62,6 +73,13 @@ export class DataRecorder extends HTMLElement {
 		this.configBox.onchange = this.#parseConfigBox.bind(this);
 
 		this.#parseConfigBox();
+	}
+
+	#optionsChanged() {
+		// View.
+		this.#updateViewSquadSelection();
+		this.#updateViewSquadList();
+		this.#updateViewDataBox();
 	}
 
 	#parseConfigBox() {
@@ -124,6 +142,11 @@ export class DataRecorder extends HTMLElement {
 	}
 
 	#onKeyDown(e) {
+		// Ignore hotkey while typing in the config or data boxes.
+		if (document.activeElement.tagName == "TEXTAREA") {
+			return
+		}
+
 		// Select squadmate.
 		let numKey = parseInt(e.key);
 		if (!isNaN(numKey)) {
@@ -142,24 +165,21 @@ export class DataRecorder extends HTMLElement {
 			this.databox.value = this.databox.value.replace(/\r?\n?[^\r\n]*$/, "");	
 			
 		// Ignore alpha keys reserved for other hotkeys.
-		} else if (/^j|k|l$/.test(e.key)) {
+		} else if (/^j|k|l|q|w|e|r|t$/.test(e.key)) {
 
 		// Record event.
 		} else if (/^[a-zA-Z]$/.test(e.key) && e.key in this.dataEvents) {
-			// Ignore hotkey while typing in the config or data boxes.
-			if (document.activeElement.tagName != "TEXTAREA") {
-				let ytPlayer = document.getElementsByTagName("video-controller")[0].ytPlayer;
+			let ytPlayer = document.getElementsByTagName("video-controller")[0].ytPlayer;
 
-				let time = ytPlayer ? this.#secondsToHHMMSS(ytPlayer.getCurrentTime()) : 0;
-				let eventName = this.dataEvents[e.key] || "";
-				let mateName = this.#getMateName(this.selectedMateIndex);
+			let time = ytPlayer ? this.#secondsToHHMMSS(ytPlayer.getCurrentTime()) : 0;
+			let eventName = this.dataEvents[e.key] || "";
+			let mateName = this.#getMateName(this.selectedMateIndex);
 
-				if (this.databox.value.length > 0) {
-					this.databox.value += "\n";
-				}
-				this.databox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}` : "");
-				this.databox.scrollTop = this.databox.scrollHeight;
+			if (this.databox.value.length > 0) {
+				this.databox.value += "\n";
 			}
+			this.databox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}` : "");
+			this.databox.scrollTop = this.databox.scrollHeight;
 		}
 	}
 
@@ -185,7 +205,14 @@ export class DataRecorder extends HTMLElement {
 		}
 
 		let squad = document.getElementsByClassName("squad")[0];
-		squad.classList.toggle("squad--hidden", this.squadmates.length == 0);
+		let showOverlay = this.showOverlayCheckbox.checked
+		squad.classList.toggle("squad--hidden", this.squadmates.length == 0 || !showOverlay);
+	}
+
+	#updateViewDataBox() {
+		let showOverlay = this.showOverlayCheckbox.checked
+		let databox = document.getElementsByClassName("databox")[0];
+		databox.classList.toggle("squad--hidden", !showOverlay);
 	}
 }
 
