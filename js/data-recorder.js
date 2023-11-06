@@ -1,3 +1,4 @@
+import { defaultVideoId } from "./common.js"
 
 export class DataRecorder extends HTMLElement {
 	constructor() {
@@ -122,6 +123,18 @@ export class DataRecorder extends HTMLElement {
 		// View.
 		this.#updateViewSquadSelection();
 		this.#updateViewSquadList();
+
+		// Update URL with videoId.
+		let isConfigDefaultVid = this.videoId == defaultVideoId;
+		let params = new URLSearchParams(location.search);
+		let urlVideoId = params.get("v");
+		let desiredUrlVideoId = isConfigDefaultVid ? null : this.videoId;
+		if (urlVideoId != desiredUrlVideoId) {
+			var url = new URL(window.location.href);
+			var searchParams = url.searchParams;
+			searchParams.set("v", desiredUrlVideoId);
+			window.history.replaceState(null, null, url.href);
+		}
 	}
 
 	#getMateName(index) {

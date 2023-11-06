@@ -1,0 +1,1 @@
+export const defaultVideoId = "LfduUFF_i1A" 

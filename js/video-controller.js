@@ -1,3 +1,4 @@
+import { defaultVideoId } from "./common.js"
 
 export class VideoController extends HTMLElement {
 	constructor() {
@@ -38,7 +39,7 @@ export class VideoController extends HTMLElement {
 			// Determine videoId.
 			let params = new URLSearchParams(location.search);
 			let urlVideoId = params.get("v");
-			let videoId = urlVideoId != null && urlVideoId.length > 0 ? urlVideoId : "LfduUFF_i1A";
+			let videoId = urlVideoId != null && urlVideoId.length > 0 ? urlVideoId : defaultVideoId;
 
 			this.ytPlayer = new YT.Player("player", {
 				videoId: videoId,
