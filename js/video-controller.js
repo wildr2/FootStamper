@@ -150,6 +150,11 @@ export class VideoController extends HTMLElement {
 
 		this.#zoom(this.zoomScale, this.zoomOriginX);
 
+		// Prevent Iframe from stealing focus!
+		if (document.activeElement.tagName == "IFRAME") {
+			document.activeElement.blur();
+		}
+
 		this.prevAnimateTime = time;
 		this.prevZoomLevel = this.zoomLevel;
 		requestAnimationFrame(this.#animationStep.bind(this));
