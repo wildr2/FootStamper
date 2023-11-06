@@ -3,7 +3,9 @@ import { defaultVideoId } from "./common.js"
 export class VideoController extends HTMLElement {
 	constructor() {
 		super();
+
 		this.ytPlayer = null;
+		this.hasShownFullscreenAlert = false;
 
 		this.minZoomPos = -2
 		this.maxZoomPos = 2
@@ -71,6 +73,20 @@ export class VideoController extends HTMLElement {
 
 		// Animation.
 		requestAnimationFrame(this.#animationStep.bind(this));
+
+		document.addEventListener('fullscreenchange', this.#onFullscreenChanged.bind(this));
+	}
+
+	#onFullscreenChanged() {
+		if (document.fullscreenElement) {
+			if (document.fullscreenElement.tagName == "IFRAME" && !this.hasShownFullscreenAlert) {
+				window.alert("YouTube's fullscreen button doesn't play nice with kittiestats! Use the f hotkey to enter fullscreen instead.");
+				this.hasShownFullscreenAlert = true;
+			}
+		}
+		else {
+			this.hasShownFullscreenAlert = false;
+		}
 	}
 
 	#onConfigChanged(dataRecorder) {
@@ -117,6 +133,13 @@ export class VideoController extends HTMLElement {
 			this.#setZoomLevelPos(this.maxZoomLevel, 2)
 		} else if (e.key == " ") {
 			this.#setZoomLevelPos(this.#getToggledZoomLevel(), this.zoomLevel)
+
+		} else if (e.key == "f") {
+			if (!document.fullscreenElement) {
+				document.documentElement.requestFullscreen();
+			} else {
+				document.exitFullscreen();
+			}
 		}
 	}
 

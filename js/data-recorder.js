@@ -178,7 +178,7 @@ export class DataRecorder extends HTMLElement {
 			this.databox.value = this.databox.value.replace(/\r?\n?[^\r\n]*$/, "");	
 			
 		// Ignore alpha keys reserved for other hotkeys.
-		} else if (/^j|k|l|q|w|e|r|t$/.test(e.key)) {
+		} else if (/^j|k|l|q|w|e|r|t|f$/.test(e.key)) {
 
 		// Record event.
 		} else if (/^[a-zA-Z]$/.test(e.key) && e.key in this.dataEvents) {
