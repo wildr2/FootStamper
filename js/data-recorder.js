@@ -1,4 +1,4 @@
-import { defaultVideoId } from "./common.js"
+import { defaultVideoId, configTemplate1, configTemplate2 } from "./common.js"
 
 export class DataRecorder extends HTMLElement {
 	constructor() {
@@ -14,6 +14,8 @@ export class DataRecorder extends HTMLElement {
 		// args: dataRecorder
 		this.configChangedCallbacks = [];
 		this.configBox = document.getElementsByClassName("title-section__config")[0];
+		this.config1Button = document.getElementById("config-1-button");
+		this.config2Button = document.getElementById("config-2-button");
 
 		this.databox = document.getElementsByClassName("databox__textarea")[0];
 		this.showOverlayCheckbox = document.getElementById("show-overlay-checkbox");
@@ -28,7 +30,10 @@ export class DataRecorder extends HTMLElement {
 	#init() {
 		addEventListener("keydown", this.#onKeyDown.bind(this));
 		this.#initConfigBox();
-		this.showOverlayCheckbox.onchange = this.#optionsChanged.bind(this);
+
+		this.config1Button.onclick = () => this.#applyConfigTemplate(1);
+		this.config2Button.onclick = () => this.#applyConfigTemplate(2);
+		this.showOverlayCheckbox.onchange = this.#onOptionsChanged.bind(this);
 	}
 
 	#initConfigBox() {
@@ -76,25 +81,50 @@ export class DataRecorder extends HTMLElement {
 		this.#parseConfigBox();
 	}
 
-	#optionsChanged() {
+	#onOptionsChanged() {
 		// View.
 		this.#updateViewSquadSelection();
 		this.#updateViewSquadList();
 		this.#updateViewDataBox();
 	}
 
+	#applyConfigTemplate(number) {
+		if (number < 1 || number > 2) {
+			return;
+		}
+		let template = number == 1 ? configTemplate1 : configTemplate2;
+
+		// Set template without changing video. 
+		let videoId = this.#parseVideoId(this.configBox.value);
+		this.configBox.value = template;
+		let lines = this.configBox.value.split("\n");
+		lines[0] = `https://www.youtube.com/watch?v=${videoId}`;
+		this.configBox.value = lines.join("\n");
+
+		this.configBox.oninput();
+		this.configBox.onchange();
+	}
+
+	#parseVideoId(text) {
+		const videoIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;	
+		let m = videoIdRegex.exec(text);
+		if (m && m.length > 1) {
+			return m[1];
+		}	
+		return null
+	}
+
 	#parseConfigBox() {
 		// Video Url.
-		const videoIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/gi;	
-		let m = videoIdRegex.exec(this.configBox.value);
-		if (m && m.length > 1) {
-			this.videoId = m[1];
+		let parsedVideoId = this.#parseVideoId(this.configBox.value);
+		if (parsedVideoId) {
+			this.videoId = parsedVideoId;
 		}	
 		
 		// Squad list.
-		this.squadmates = []
+		this.squadmates = [];
 		const squadRegex = /^Squad\n([^\S\r\n].*\n*)*/gm;
-		m = squadRegex.exec(this.configBox.value);
+		let m = squadRegex.exec(this.configBox.value);
 		let lines = m && m.length > 0 ? m[0].split("\n") : [];
 		for (let i = 1; i < lines.length; ++i) {
 			let line = lines[i].trim();
