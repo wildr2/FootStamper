@@ -6,6 +6,7 @@ export class VideoController extends HTMLElement {
 
 		this.ytPlayer = null;
 		this.hasShownFullscreenAlert = false;
+		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
 
 		this.minZoomPos = -2
 		this.maxZoomPos = 2
@@ -174,7 +175,7 @@ export class VideoController extends HTMLElement {
 		this.#zoom(this.zoomScale, this.zoomOriginX);
 
 		// Prevent Iframe from stealing focus!
-		if (document.activeElement.tagName == "IFRAME") {
+		if (!this.allowFocusCheckbox.checked && document.activeElement.tagName == "IFRAME") {
 			document.activeElement.blur();
 		}
 
