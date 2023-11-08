@@ -17,7 +17,7 @@ export class DataRecorder extends HTMLElement {
 		this.config1Button = document.getElementById("config-1-button");
 		this.config2Button = document.getElementById("config-2-button");
 
-		this.databox = document.getElementsByClassName("databox__textarea")[0];
+		this.dataBox = document.getElementsByClassName("databox__textarea")[0];
 		this.showOverlayCheckbox = document.getElementById("show-overlay-checkbox");
 
 		this.#init();
@@ -27,6 +27,19 @@ export class DataRecorder extends HTMLElement {
 		this.configChangedCallbacks.push(callback);
 	}
 
+	getEventTimestamps() {
+		let data = this.dataBox.value;
+		let lines = data.split("\n");
+		let timestamps = [];
+		for (let line of lines) {
+			let timestamp = this.#parseTimestamp(line);
+			if (timestamp) {
+				timestamps.push(timestamp);
+			}
+		}
+		return timestamps;
+	}
+
 	#init() {
 		addEventListener("keydown", this.#onKeyDown.bind(this));
 		this.#initConfigBox();
@@ -34,6 +47,9 @@ export class DataRecorder extends HTMLElement {
 		this.config1Button.onclick = () => this.#applyConfigTemplate(1);
 		this.config2Button.onclick = () => this.#applyConfigTemplate(2);
 		this.showOverlayCheckbox.onchange = this.#onOptionsChanged.bind(this);
+		
+		// Handle manual data changes.
+		this.dataBox.onchange = this.#onDataChanged.bind(this);
 	}
 
 	#initConfigBox() {
@@ -88,12 +104,19 @@ export class DataRecorder extends HTMLElement {
 		this.#updateViewDataBox();
 	}
 
+	#onDataChanged() {
+		// Sort data.
+		let lines = this.dataBox.value.split("\n");
+		lines.sort();
+		this.dataBox.value = lines.join("\n");
+	}
+
 	#applyConfigTemplate(number) {
 		if (number < 1 || number > 2) {
 			return;
 		}
 		let template = number == 1 ? configTemplate1 : configTemplate2;
-
+		
 		// Set template without changing video. 
 		let videoId = this.#parseVideoId(this.configBox.value);
 		this.configBox.value = template;
@@ -111,7 +134,7 @@ export class DataRecorder extends HTMLElement {
 		if (m && m.length > 1) {
 			return m[1];
 		}	
-		return null
+		return null				
 	}
 
 	#parseConfigBox() {
@@ -167,6 +190,22 @@ export class DataRecorder extends HTMLElement {
 		}
 	}
 
+	#parseTimestamp(text) {
+		var timeRegex = /(\d{2}):(\d{2}):(\d{2})/;
+		let match = timeRegex.exec(text);
+
+		if (match) {
+			var hours = parseInt(match[1], 10);
+			var minutes = parseInt(match[2], 10);
+			var seconds = parseInt(match[3], 10);
+
+			var totalTimeInSeconds = hours * 3600 + minutes * 60 + seconds;
+			return totalTimeInSeconds;
+		} else {
+			return null;
+		}
+	}
+
 	#getMateName(index) {
 		if (index >= 0 && index < this.squadmates.length) {
 			return this.squadmates[index];
@@ -205,7 +244,7 @@ export class DataRecorder extends HTMLElement {
 		
 		// Delete last data line.
 		} else if (e.key == "Delete") {
-			this.databox.value = this.databox.value.replace(/\r?\n?[^\r\n]*$/, "");	
+			this.dataBox.value = this.dataBox.value.replace(/\r?\n?[^\r\n]*$/, "");	
 			
 		// Ignore alpha keys reserved for other hotkeys.
 		} else if (/^j|k|l|q|w|e|r|t|f$/.test(e.key)) {
@@ -218,11 +257,13 @@ export class DataRecorder extends HTMLElement {
 			let eventName = this.dataEvents[e.key] || "";
 			let mateName = this.#getMateName(this.selectedMateIndex);
 
-			if (this.databox.value.length > 0) {
-				this.databox.value += "\n";
+			if (this.dataBox.value.length > 0) {
+				this.dataBox.value += "\n";
 			}
-			this.databox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}` : "");
-			this.databox.scrollTop = this.databox.scrollHeight;
+			this.dataBox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}` : "");
+			this.dataBox.scrollTop = this.dataBox.scrollHeight;
+			
+			this.#onDataChanged();
 		}
 	}
 
@@ -254,8 +295,8 @@ export class DataRecorder extends HTMLElement {
 
 	#updateViewDataBox() {
 		let showOverlay = this.showOverlayCheckbox.checked
-		let databox = document.getElementsByClassName("databox")[0];
-		databox.classList.toggle("squad--hidden", !showOverlay);
+		let dataBox = document.getElementsByClassName("dataBox")[0];
+		dataBox.classList.toggle("squad--hidden", !showOverlay);
 	}
 }
 

@@ -7,6 +7,7 @@ export class VideoController extends HTMLElement {
 		this.ytPlayer = null;
 		this.hasShownFullscreenAlert = false;
 		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
+		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
 
 		this.minZoomPos = -2
 		this.maxZoomPos = 2
@@ -66,15 +67,14 @@ export class VideoController extends HTMLElement {
 		window.onPlayerStateChange = (e) => {
 		};
 
-		addEventListener("keypress", this.#onKeyPress.bind(this));
-
-		// Handle config changes.
-		let dataRecorder = document.getElementsByTagName("data-recorder")[0];
-		dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
-
 		// Animation.
 		requestAnimationFrame(this.#animationStep.bind(this));
 
+		// Handle config changes.
+		this.dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
+
+		addEventListener("keypress", this.#onKeyPress.bind(this));
+		addEventListener("keydown", this.#onKeyDown.bind(this));
 		document.addEventListener('fullscreenchange', this.#onFullscreenChanged.bind(this));
 	}
 
@@ -100,6 +100,19 @@ export class VideoController extends HTMLElement {
 		}	
 	}
 
+	#onKeyDown(e) {
+		// Ignore hotkey while typing in the config or data boxes.
+		if (document.activeElement.tagName == "TEXTAREA") {
+			return
+		}
+
+		if (e.key == "ArrowLeft") {
+			this.#seekToPrevEvent();
+		} else if (e.key == "ArrowRight") {
+			this.#seekToNextEvent();
+		}
+	}
+
 	#onKeyPress(e) {
 		// Ignore hotkey while typing in the config or data boxes.
 		if (document.activeElement.tagName == "TEXTAREA") {
@@ -107,7 +120,13 @@ export class VideoController extends HTMLElement {
 		}
 
 		let player = this.ytPlayer;
-		if (e.key == "k") {
+		if (e.key == "f") {
+			if (!document.fullscreenElement) {
+				document.documentElement.requestFullscreen();
+			} else {
+				document.exitFullscreen();
+			}
+		} else if (e.key == "k") {
 			if (player.getPlayerState() != 1) {
 				player.playVideo();
 			} else {
@@ -121,7 +140,6 @@ export class VideoController extends HTMLElement {
 			player.seekTo(player.getCurrentTime() - 0.1);
 		} else if (e.key == ".") {
 			player.seekTo(player.getCurrentTime() + 0.1);
-
 		} else if (e.key == "q") {
 			this.#setZoomLevelPos(this.maxZoomLevel, -2)
 		} else if (e.key == "w") {
@@ -134,13 +152,34 @@ export class VideoController extends HTMLElement {
 			this.#setZoomLevelPos(this.maxZoomLevel, 2)
 		} else if (e.key == " ") {
 			this.#setZoomLevelPos(this.#getToggledZoomLevel(), this.zoomLevel)
+		}
+	}
 
-		} else if (e.key == "f") {
-			if (!document.fullscreenElement) {
-				document.documentElement.requestFullscreen();
-			} else {
-				document.exitFullscreen();
-			}
+	#seekToNextEvent() {
+		let t = this.ytPlayer.getCurrentTime();
+		let timestamps = this.dataRecorder.getEventTimestamps();
+		timestamps.push(t);
+		timestamps = Array.from(new Set(timestamps));
+		timestamps.sort(function(a, b) {
+			return a - b;
+		});
+		let i = timestamps.indexOf(t);
+		if (i >= 0 && i + 1 < timestamps.length) {
+			this.ytPlayer.seekTo(timestamps[i + 1]);
+		}
+	}
+
+	#seekToPrevEvent() {
+		let t = this.ytPlayer.getCurrentTime();
+		let timestamps = this.dataRecorder.getEventTimestamps();
+		timestamps.push(t);
+		timestamps = Array.from(new Set(timestamps));
+		timestamps.sort(function(a, b) {
+			return a - b;
+		});
+		let i = timestamps.indexOf(t);
+		if (i - 1 >= 0) {
+			this.ytPlayer.seekTo(timestamps[i - 1]);
 		}
 	}
 
@@ -193,20 +232,20 @@ export class VideoController extends HTMLElement {
 		return Math.min(Math.max(min, value), max);
 	}
 		
-    #map(inputMin, inputMax, outputMin, outputMax, value) {
-        if (inputMin > inputMax) {
-            return this.#map(inputMax, inputMin, outputMax, outputMin, value);
-        }
-        if (value < inputMin) {
-            return outputMin;
-        }
-        else if (value > inputMax) {
-            return outputMax;
-        }
-        else {
-            return (value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin;
-        }
-    }
+	#map(inputMin, inputMax, outputMin, outputMax, value) {
+		if (inputMin > inputMax) {
+			return this.#map(inputMax, inputMin, outputMax, outputMin, value);
+		}
+		if (value < inputMin) {
+			return outputMin;
+		}
+		else if (value > inputMax) {
+			return outputMax;
+		}
+		else {
+			return (value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin;
+		}
+	}
 
 	#setZoomLevelPos(level, pos) {
 		this.zoomLevel = level;
