@@ -295,7 +295,7 @@ export class DataRecorder extends HTMLElement {
 
 	#updateViewDataBox() {
 		let showOverlay = this.showOverlayCheckbox.checked
-		let dataBox = document.getElementsByClassName("dataBox")[0];
+		let dataBox = document.getElementsByClassName("databox")[0];
 		dataBox.classList.toggle("squad--hidden", !showOverlay);
 	}
 }

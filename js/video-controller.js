@@ -9,6 +9,9 @@ export class VideoController extends HTMLElement {
 		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
 
+		this.overlayText = document.getElementsByClassName("overlay-text")[0];
+		this.hideOverlayTextTimeout = null;
+
 		this.minZoomPos = -2
 		this.maxZoomPos = 2
 		this.minZoomLevel = 0
@@ -21,8 +24,8 @@ export class VideoController extends HTMLElement {
 		this.prevZoomLevel = 0;
 		this.zoomTargetScale = 1.0;
 		this.zoomScale = 1.0;
-		this.zoomOriginX = 50.0;
 		this.zoomTargetOriginX = 50.0;
+		this.zoomOriginX = 50.0;
 		this.prevAnimateTime = 0;
 		this.startZoomInTime = 0;
 
@@ -155,6 +158,10 @@ export class VideoController extends HTMLElement {
 		}
 	}
 
+	#modulo(value, n) {
+		return ((value % n) + n) % n;
+	}
+
 	#seekToNextEvent() {
 		let t = this.ytPlayer.getCurrentTime();
 		let timestamps = this.dataRecorder.getEventTimestamps();
@@ -164,8 +171,9 @@ export class VideoController extends HTMLElement {
 			return a - b;
 		});
 		let i = timestamps.indexOf(t);
-		if (i >= 0 && i + 1 < timestamps.length) {
-			this.ytPlayer.seekTo(timestamps[i + 1]);
+		if (i >= 0 && timestamps.length > 1) {
+			i = (i + 1) % timestamps.length;
+			this.#seekToEventTime(timestamps[i]);
 		}
 	}
 
@@ -178,9 +186,28 @@ export class VideoController extends HTMLElement {
 			return a - b;
 		});
 		let i = timestamps.indexOf(t);
-		if (i - 1 >= 0) {
-			this.ytPlayer.seekTo(timestamps[i - 1]);
+		if (i >= 0 && timestamps.length > 1) {
+			i = this.#modulo(i - 1, timestamps.length);
+			this.#seekToEventTime(timestamps[i]);
 		}
+	}
+
+	#seekToEventTime(time) {
+		this.ytPlayer.seekTo(time);
+		
+		this.#resetCamera();
+
+		// Show minute overlay.
+		let minute = Math.floor(time / 60) + 1;
+		this.overlayText.innerHTML = `${minute}'`
+		this.overlayText.classList.toggle("overlay-text--hidden", false);
+
+		if (this.hideOverlayTextTimeout) {
+			clearTimeout(this.hideOverlayTextTimeout);
+		}
+		this.hideOverlayTextTimeout = setTimeout(function() {
+			this.overlayText.classList.toggle("overlay-text--hidden", true);
+		}.bind(this), 1500);
 	}
 
 	#getToggledZoomLevel() {
@@ -250,6 +277,15 @@ export class VideoController extends HTMLElement {
 	#setZoomLevelPos(level, pos) {
 		this.zoomLevel = level;
 		this.zoomPos = pos;
+	}
+
+	#resetCamera() {
+		this.zoomLevel = this.minZoomLevel;
+		this.zoomPos = 0;
+		this.zoomTargetScale = this.minZoomScale;
+		this.zoomScale = this.minZoomScale;
+		this.zoomTargetOriginX = 50;
+		this.zoomOriginX = 50;
 	}
 
 	#zoom(scale, originX=50, originY=50) {
