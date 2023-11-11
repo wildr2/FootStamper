@@ -43,7 +43,9 @@ Events
 			<br>
 			Config Template:&nbsp;
 			<input id="config-2-button" type="button" value="Basic"/>
-			<input id="config-1-button" type="button" value="Player Stats"/>
+			<input id="config-1-button" type="button" value="Player Stats"/>&nbsp;&nbsp;
+			Local Video:&nbsp;
+			<input class="video-section__custom-player-input" type="file" accept="video/*"/>
 			<br><br>
 			
 			<h1>Playback</h1>
@@ -99,6 +101,7 @@ Events
 		<video-controller>
 			<!-- The <iframe> (and video player) will replace this tag. -->
 			<div id="player" class="video-section__player"></div>
+			<video class="video-section__custom-player hidden" controls autoplay></video>
 		</video-controller>
 		<div class="squad draggable">
 			<div class="draggable__handle">Squad</div>
@@ -109,6 +112,7 @@ Events
 			<textarea class="databox__textarea" spellcheck="false"></textarea>
 		</div>
 		<div class="overlay-text overlay-text--hidden">19'</div>
+		<div class="overlay-bg overlay-bg--hidden"></div>
 	</div>
 	<script>
 		// Allow css to select based on whether body has focus.

@@ -1,12 +1,10 @@
-import { defaultVideoId, configTemplate1, configTemplate2 } from "./common.js"
+import { defaultYtVideoId, configTemplate1, configTemplate2 } from "./common.js"
 
 export class DataRecorder extends HTMLElement {
 	constructor() {
 		super();
 		this.selectedMateIndex = -1;
 		this.selectedMateTimeMs = -1;
-
-		this.videoId = "";
 		// names
 		this.squadmates = [];
 		// { key, name }, eg. { "g", "goal" }
@@ -16,15 +14,28 @@ export class DataRecorder extends HTMLElement {
 		this.configBox = document.getElementsByClassName("title-section__config")[0];
 		this.config1Button = document.getElementById("config-1-button");
 		this.config2Button = document.getElementById("config-2-button");
-
 		this.dataBox = document.getElementsByClassName("databox__textarea")[0];
 		this.showOverlayCheckbox = document.getElementById("show-overlay-checkbox");
+		// args: browseVideoInput.
+		this.browseVideoInput = document.getElementsByClassName("video-section__custom-player-input")[0]
 
 		this.#init();
 	}
 
 	subscribeConfigChanged(callback) {
 		this.configChangedCallbacks.push(callback);
+	}
+
+	subscribeBrowseVideoInputChanged(callback) {
+		this.browseVideoInputChangedCallbacks.push(callback);
+	}
+
+	getYtVideoId() {
+		return this.#parseYtVideoId(this.configBox.value);
+	}
+
+	getCustomVideoFile() {
+		return this.browseVideoInput.files.length > 0 ? this.browseVideoInput.files[0] : null
 	}
 
 	getEventTimestamps() {
@@ -47,6 +58,7 @@ export class DataRecorder extends HTMLElement {
 		this.config1Button.onclick = () => this.#applyConfigTemplate(1);
 		this.config2Button.onclick = () => this.#applyConfigTemplate(2);
 		this.showOverlayCheckbox.onchange = this.#onOptionsChanged.bind(this);
+		this.#initBrowseVideoInput();
 		
 		// Handle manual data changes.
 		this.dataBox.onchange = this.#onDataChanged.bind(this);
@@ -55,10 +67,10 @@ export class DataRecorder extends HTMLElement {
 	#initConfigBox() {
 		// Write url video ID to config.
 		let params = new URLSearchParams(location.search);
-		let urlVideoId = params.get("v");
-		if (urlVideoId != null && urlVideoId.length > 0) {
+		let urlYtVideoId = params.get("v");
+		if (urlYtVideoId != null && urlYtVideoId.length > 0) {
 			let lines = this.configBox.value.split("\n");
-			lines[0] = `https://www.youtube.com/watch?v=${urlVideoId}`;
+			lines[0] = `https://www.youtube.com/watch?v=${urlYtVideoId}`;
 			this.configBox.value = lines.join("\n");
 		}
 		
@@ -97,6 +109,22 @@ export class DataRecorder extends HTMLElement {
 		this.#parseConfigBox();
 	}
 
+	#initBrowseVideoInput() {
+		var onChanged = function (event) {
+			var file = this.browseVideoInput.files[0];
+
+			// Replace config video url.
+			// TODO: don't assume url on first line.
+			let lines = this.configBox.value.split("\n");
+			lines[0] = file.name;
+			this.configBox.value = lines.join("\n");
+			
+			this.configBox.oninput();
+			this.configBox.onchange();
+		}
+		this.browseVideoInput.addEventListener('change', onChanged.bind(this), false);
+	}
+
 	#onOptionsChanged() {
 		// View.
 		this.#updateViewSquadSelection();
@@ -118,31 +146,47 @@ export class DataRecorder extends HTMLElement {
 		let template = number == 1 ? configTemplate1 : configTemplate2;
 		
 		// Set template without changing video. 
-		let videoId = this.#parseVideoId(this.configBox.value);
+		// TODO: what if custom video url (parseVideoURL)
+		let ytVideoId = this.#parseYtVideoId(this.configBox.value);
 		this.configBox.value = template;
-		let lines = this.configBox.value.split("\n");
-		lines[0] = `https://www.youtube.com/watch?v=${videoId}`;
-		this.configBox.value = lines.join("\n");
+		if (ytVideoId != null) {
+			let lines = this.configBox.value.split("\n");
+			lines[0] = `https://www.youtube.com/watch?v=${ytVideoId}`;
+			this.configBox.value = lines.join("\n");
+		}
 
 		this.configBox.oninput();
 		this.configBox.onchange();
 	}
 
-	#parseVideoId(text) {
-		const videoIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;	
-		let m = videoIdRegex.exec(text);
+	#parseYtVideoId(text) {
+		const ytVideoIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;	
+		let m = ytVideoIdRegex.exec(text);
 		if (m && m.length > 1) {
 			return m[1];
 		}	
-		return null				
+		return null
 	}
 
 	#parseConfigBox() {
 		// Video Url.
-		let parsedVideoId = this.#parseVideoId(this.configBox.value);
-		if (parsedVideoId) {
-			this.videoId = parsedVideoId;
-		}	
+		let configYtVideoId = this.#parseYtVideoId(this.configBox.value);
+
+		// Update URL with video id.
+		let params = new URLSearchParams(location.search);
+		let urlYtVideoId = params.get("v");
+		let desiredUrlYtVideoId = configYtVideoId == defaultYtVideoId ? null : configYtVideoId;
+		if (urlYtVideoId != desiredUrlYtVideoId) {
+			var url = new URL(window.location.href);
+			var searchParams = url.searchParams;
+			searchParams.set("v", desiredUrlYtVideoId);
+			window.history.replaceState(null, null, url.href);
+		}
+
+		// Update browse video input.
+		if (configYtVideoId) {
+			this.browseVideoInput.value = null;
+		}
 		
 		// Squad list.
 		this.squadmates = [];
@@ -176,18 +220,6 @@ export class DataRecorder extends HTMLElement {
 		// View.
 		this.#updateViewSquadSelection();
 		this.#updateViewSquadList();
-
-		// Update URL with videoId.
-		let isConfigDefaultVid = this.videoId == defaultVideoId;
-		let params = new URLSearchParams(location.search);
-		let urlVideoId = params.get("v");
-		let desiredUrlVideoId = isConfigDefaultVid ? null : this.videoId;
-		if (urlVideoId != desiredUrlVideoId) {
-			var url = new URL(window.location.href);
-			var searchParams = url.searchParams;
-			searchParams.set("v", desiredUrlVideoId);
-			window.history.replaceState(null, null, url.href);
-		}
 	}
 
 	#parseTimestamp(text) {

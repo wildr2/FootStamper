@@ -1,16 +1,21 @@
-import { defaultVideoId } from "./common.js"
+import { defaultYtVideoId } from "./common.js"
 
 export class VideoController extends HTMLElement {
 	constructor() {
 		super();
 
 		this.ytPlayer = null;
+		this.customPlayer = document.getElementsByClassName("video-section__custom-player")[0];
+		this.customPlayerFile = null;
+
 		this.hasShownFullscreenAlert = false;
 		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
 
 		this.overlayText = document.getElementsByClassName("overlay-text")[0];
-		this.hideOverlayTextTimeout = null;
+		this.overlayBg = document.getElementsByClassName("overlay-bg")[0];
+		this.hideOverlayTextTimeout;
+		this.hideOverlayBgTimeout;
 
 		this.minZoomPos = -2
 		this.maxZoomPos = 2
@@ -33,6 +38,20 @@ export class VideoController extends HTMLElement {
 	}
 
 	#init() {
+		this.#initYTPlayer();
+		
+		// Animation.
+		requestAnimationFrame(this.#animationStep.bind(this));
+
+		// Handle config changes.
+		this.dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
+
+		addEventListener("keypress", this.#onKeyPress.bind(this));
+		addEventListener("keydown", this.#onKeyDown.bind(this));
+		document.addEventListener('fullscreenchange', this.#onFullscreenChanged.bind(this));
+	}
+
+	#initYTPlayer() {
 		// Loads the IFrame Player API code asynchronously.
 		var tag = document.createElement("script");
 		tag.src = "https://www.youtube.com/iframe_api";
@@ -45,8 +64,8 @@ export class VideoController extends HTMLElement {
 			
 			// Determine videoId.
 			let params = new URLSearchParams(location.search);
-			let urlVideoId = params.get("v");
-			let videoId = urlVideoId != null && urlVideoId.length > 0 ? urlVideoId : defaultVideoId;
+			let urlYtVideoId = params.get("v");
+			let videoId = urlYtVideoId != null && urlYtVideoId.length > 0 ? urlYtVideoId : defaultYtVideoId;
 
 			this.ytPlayer = new YT.Player("player", {
 				videoId: videoId,
@@ -59,6 +78,17 @@ export class VideoController extends HTMLElement {
 				}
 			});
 			document.ytPlayer = this.ytPlayer;
+
+			new YT.Player("player2", {
+				videoId: videoId,
+				playerVars: {
+					"playsinline": 1
+				},
+				events: {
+					"onReady": onPlayerReady,
+					"onStateChange": onPlayerStateChange
+				}
+			});
 		};
 
 		// Called by YT API. Function must be defined.
@@ -69,16 +99,6 @@ export class VideoController extends HTMLElement {
 		// Called by YT API. Function must be defined.
 		window.onPlayerStateChange = (e) => {
 		};
-
-		// Animation.
-		requestAnimationFrame(this.#animationStep.bind(this));
-
-		// Handle config changes.
-		this.dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
-
-		addEventListener("keypress", this.#onKeyPress.bind(this));
-		addEventListener("keydown", this.#onKeyDown.bind(this));
-		document.addEventListener('fullscreenchange', this.#onFullscreenChanged.bind(this));
 	}
 
 	#onFullscreenChanged() {
@@ -94,13 +114,21 @@ export class VideoController extends HTMLElement {
 	}
 
 	#onConfigChanged(dataRecorder) {
-		if (this.ytPlayer && this.ytPlayer.getVideoData) {
-			let oldVideoId = this.ytPlayer.getVideoData()['video_id'];
-			let newVideoId = dataRecorder.videoId;
-			if (newVideoId != oldVideoId) {
-				this.ytPlayer.loadVideoById(newVideoId);
-			}
-		}	
+		// Youtube video.
+		let ytVideoId = dataRecorder.getYtVideoId();
+		if (ytVideoId) {
+			this.#playYtVideo(ytVideoId);
+			this.#showPlayer(true);
+			return;
+		}
+
+		// Custom video.
+		let customVideoFile = dataRecorder.getCustomVideoFile();
+		if (customVideoFile) {
+			this.#playCustomVideo(customVideoFile);
+			this.#showPlayer(false);
+			return;
+		}
 	}
 
 	#onKeyDown(e) {
@@ -158,6 +186,44 @@ export class VideoController extends HTMLElement {
 		}
 	}
 
+	#playYtVideo(videoId) {
+		if (this.ytPlayer && this.ytPlayer.getVideoData) {
+			let oldVideoId = this.ytPlayer.getVideoData()['video_id'];
+			if (videoId != oldVideoId) {
+				this.ytPlayer.loadVideoById(videoId);
+			}
+		}	
+	}
+
+	#playCustomVideo(file) {
+		if (this.customPlayerFile == file)
+		{
+			return;
+		}
+		var canPlay = this.customPlayer.canPlayType(file.type);
+		var isError = canPlay === 'no';
+		if (isError) {
+			return;
+		}
+		this.customPlayerFile = file;
+		this.customPlayer.src = URL.createObjectURL(file);
+	}
+
+	#showPlayer(showYtPlayer) {
+		if (this.ytPlayer) {
+			let iframe = this.ytPlayer.getIframe();
+			iframe.classList.toggle("hidden", !showYtPlayer);
+			if (!showYtPlayer) {
+				this.ytPlayer.stopVideo();
+			}
+		}
+
+		this.customPlayer.classList.toggle("hidden", showYtPlayer);
+		if (showYtPlayer) {
+			this.customPlayer.src = null;
+		}
+	}
+
 	#modulo(value, n) {
 		return ((value % n) + n) % n;
 	}
@@ -201,13 +267,25 @@ export class VideoController extends HTMLElement {
 		let minute = Math.floor(time / 60) + 1;
 		this.overlayText.innerHTML = `${minute}'`
 		this.overlayText.classList.toggle("overlay-text--hidden", false);
-
 		if (this.hideOverlayTextTimeout) {
 			clearTimeout(this.hideOverlayTextTimeout);
 		}
 		this.hideOverlayTextTimeout = setTimeout(function() {
 			this.overlayText.classList.toggle("overlay-text--hidden", true);
+			this.ytPlayer.playVideo();
 		}.bind(this), 1500);
+		
+		// Background to hide buffering.
+		// this.overlayBg.classList.toggle("overlay-bg--hidden", false);
+		// if (this.hideOverlayBgTimeout) {
+		// 	clearInterval(this.hideOverlayBgTimeout);
+		// }
+		// this.hideOverlayBgTimeout = setInterval(function() {
+		// 	if (this.ytPlayer.getPlayerState() != YT.PlayerState.BUFFERING) {
+		// 		this.overlayBg.classList.toggle("overlay-bg--hidden", true);
+		// 		clearInterval(this.hideOverlayBgTimeout);
+		// 	}
+		// }.bind(this), 100);
 	}
 
 	#getToggledZoomLevel() {
@@ -289,12 +367,16 @@ export class VideoController extends HTMLElement {
 	}
 
 	#zoom(scale, originX=50, originY=50) {
-		if (!this.ytPlayer) {
-			return
+		if (this.customPlayer.classList.contains("hidden")) {
+			if (this.ytPlayer) {
+				let iframe = this.ytPlayer.getIframe();
+				iframe.style.transform = `scale(${scale})`;
+				iframe.style.transformOrigin = `${originX}% ${originY}%`;
+			}
+		} else {
+			this.customPlayer.style.transform = `scale(${scale})`;
+			this.customPlayer.style.transformOrigin = `${originX}% ${originY}%`;
 		}
-		let iframe = this.ytPlayer.getIframe();
-		iframe.style.transform = `scale(${scale})`;
-		iframe.style.transformOrigin = `${originX}% ${originY}%`
 	}
 }
 
