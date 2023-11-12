@@ -93,6 +93,14 @@ table {
 	color: white;
 	text-decoration: none;
 }
+.title-section__wildrobert-logo {
+	position: relative;
+	float: right;
+	width: 40px;
+	height: 40px;
+	margin-top: -20px;
+	image-rendering: pixelated;
+}
 .title-section__config {
 	display: block;
 	background-color: #000;
