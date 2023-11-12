@@ -11,6 +11,7 @@ export class VideoController extends HTMLElement {
 
 		this.hasShownFullscreenAlert = false;
 		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
+		this.showControlsCheckbox = document.getElementById("show-controls-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
 
 		this.overlayText = document.getElementsByClassName("overlay-text")[0];
@@ -51,6 +52,10 @@ export class VideoController extends HTMLElement {
 		addEventListener("keypress", this.#onKeyPress.bind(this));
 		addEventListener("keydown", this.#onKeyDown.bind(this));
 		document.addEventListener('fullscreenchange', this.#onFullscreenChanged.bind(this));
+
+		this.showControlsCheckbox.onchange = function() {
+			this.customPlayer.controls = this.showControlsCheckbox.checked;
+		}.bind(this);
 	}
 
 	#initYTPlayer() {
@@ -217,6 +222,7 @@ export class VideoController extends HTMLElement {
 		}
 
 		this.customPlayer.classList.toggle("hidden", showYtPlayer);
+		this.showControlsCheckbox.classList.toggle("hidden", showYtPlayer);
 		if (showYtPlayer) {
 			this.customPlayer.src = null;
 		}
@@ -322,8 +328,13 @@ export class VideoController extends HTMLElement {
 		// Show minute overlay.
 		let minute = Math.floor(time / 60) + 1;
 		this.overlayText.innerHTML = `${minute}'`
-		this.overlayText.classList.toggle("overlay-text--hidden", false);
-		this.overlayBg.classList.toggle("overlay-bg--hidden", false);
+		if (this.#usingYtPlayer()) {
+			// Hide buffering.
+			this.overlayBg.classList.toggle("hidden", false);
+			this.overlayText.classList.toggle("hidden", false);
+		} else {
+			this.overlayText.classList.toggle("hidden", true);
+		}
 		this.seekingToEvent = true;
 		this.eventSeekTime = time;
 	}
@@ -373,13 +384,13 @@ export class VideoController extends HTMLElement {
 				// Seek completed.
 				this.seekingToEvent = false;
 				this.showOverlayTextTime = time;
-				this.overlayText.classList.toggle("overlay-text--hidden", false);
-				this.overlayBg.classList.toggle("overlay-bg--hidden", true);
+				this.overlayText.classList.toggle("hidden", false);
+				this.overlayBg.classList.toggle("hidden", true);
 				this.#resetCamera();
 			}
 		} else if (this.showOverlayTextTime >= 0 && time - this.showOverlayTextTime > overlayTextDuration) {
 			// Hide overlay text.
-			this.overlayText.classList.toggle("overlay-text--hidden", true);
+			this.overlayText.classList.toggle("hidden", true);
 			this.showOverlayTextTime = -1;
 		}
 
