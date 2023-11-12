@@ -113,11 +113,9 @@ export class DataRecorder extends HTMLElement {
 		var onChanged = function (event) {
 			var file = this.browseVideoInput.files[0];
 
-			// Replace config video url.
-			// TODO: don't assume url on first line.
-			let lines = this.configBox.value.split("\n");
-			lines[0] = file.name;
-			this.configBox.value = lines.join("\n");
+			// Remove config video url (match entire line).
+			const regex = /.*(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11}).*\n*/i
+			this.configBox.value = this.configBox.value.replace(regex, "");
 			
 			this.configBox.oninput();
 			this.configBox.onchange();
@@ -146,7 +144,6 @@ export class DataRecorder extends HTMLElement {
 		let template = number == 1 ? configTemplate1 : configTemplate2;
 		
 		// Set template without changing video. 
-		// TODO: what if custom video url (parseVideoURL)
 		let ytVideoId = this.#parseYtVideoId(this.configBox.value);
 		this.configBox.value = template;
 		if (ytVideoId != null) {
@@ -175,11 +172,15 @@ export class DataRecorder extends HTMLElement {
 		// Update URL with video id.
 		let params = new URLSearchParams(location.search);
 		let urlYtVideoId = params.get("v");
-		let desiredUrlYtVideoId = configYtVideoId == defaultYtVideoId ? null : configYtVideoId;
+		let desiredUrlYtVideoId = configYtVideoId && configYtVideoId != defaultYtVideoId ? configYtVideoId : null;
 		if (urlYtVideoId != desiredUrlYtVideoId) {
 			var url = new URL(window.location.href);
 			var searchParams = url.searchParams;
-			searchParams.set("v", desiredUrlYtVideoId);
+			if (desiredUrlYtVideoId) {
+				searchParams.set("v", desiredUrlYtVideoId);
+			} else {
+				searchParams.delete("v");
+			}
 			window.history.replaceState(null, null, url.href);
 		}
 
