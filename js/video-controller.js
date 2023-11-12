@@ -317,6 +317,11 @@ export class VideoController extends HTMLElement {
 		let i = timestamps.indexOf(t);
 		if (i >= 0 && timestamps.length > 1) {
 			i = this.#modulo(i - 1, timestamps.length);
+			
+			if (t >= timestamps[i] && t - timestamps[i] < 3) {
+				i = this.#modulo(i - 1, timestamps.length);
+			}
+
 			this.#seekToEventTime(timestamps[i]);
 		}
 	}

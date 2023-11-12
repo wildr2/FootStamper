@@ -322,13 +322,13 @@ export class DataRecorder extends HTMLElement {
 
 		let squad = document.getElementsByClassName("squad")[0];
 		let showOverlay = this.showOverlayCheckbox.checked
-		squad.classList.toggle("squad--hidden", this.squadmates.length == 0 || !showOverlay);
+		squad.classList.toggle("hidden", this.squadmates.length == 0 || !showOverlay);
 	}
 
 	#updateViewDataBox() {
 		let showOverlay = this.showOverlayCheckbox.checked
 		let dataBox = document.getElementsByClassName("databox")[0];
-		dataBox.classList.toggle("squad--hidden", !showOverlay);
+		dataBox.classList.toggle("hidden", !showOverlay);
 	}
 }
 

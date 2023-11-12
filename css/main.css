@@ -143,9 +143,6 @@ table {
 	font-size: 3em;
 	font-weight: bold;
 }
-.overlay-text--hidden {
-	display: none;
-}
 .overlay-bg {
 	z-index: 8;
 	background-color: black;
@@ -154,9 +151,6 @@ table {
 	bottom: 0%;
 	left: 0%;
 	right: 0%;
-}
-.overlay-bg--hidden {
-	display: none;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -180,9 +174,6 @@ table {
 }
 .body-focused .squad__item--selected {
 	color: var(--color-selection-active);
-}
-.squad--hidden {
-	display: none;	
 }
 
 /*---------------------------------------------------------------------------*/
