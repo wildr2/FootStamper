@@ -208,7 +208,7 @@ export class VideoController extends HTMLElement {
 		this.customPlayer.src = URL.createObjectURL(file);
 	}
 
-	#usingYtPlayer() {
+	usingYtPlayer() {
 		return this.customPlayer.classList.contains("hidden")
 	}
 
@@ -229,7 +229,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	#play() {
-		if (this.#usingYtPlayer()) {
+		if (this.usingYtPlayer()) {
 			if (this.ytPlayer) {
 				this.ytPlayer.playVideo();
 			}
@@ -239,7 +239,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	#pause() {
-		if (this.#usingYtPlayer()) {
+		if (this.usingYtPlayer()) {
 			if (this.ytPlayer) {
 				this.ytPlayer.pauseVideo();
 			}
@@ -249,7 +249,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	isPlaying() {
-		if (this.#usingYtPlayer()) {
+		if (this.usingYtPlayer()) {
 			if (this.ytPlayer) {
 				return this.ytPlayer.getPlayerState() == YT.PlayerState.PLAYING;
 			}
@@ -260,7 +260,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	isBuffering() {
-		if (this.#usingYtPlayer()) {
+		if (this.usingYtPlayer()) {
 			if (this.ytPlayer) {
 				return this.ytPlayer.getPlayerState() == YT.PlayerState.BUFFERING;
 			}
@@ -271,7 +271,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	getCurrentTime() {
-		if (this.#usingYtPlayer()) {
+		if (this.usingYtPlayer()) {
 			if (this.ytPlayer) {
 				return this.ytPlayer.getCurrentTime();
 			}
@@ -282,7 +282,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	#seekTo(time) {
-		if (this.#usingYtPlayer()) {
+		if (this.usingYtPlayer()) {
 			if (this.ytPlayer) {
 				this.ytPlayer.seekTo(time);
 			}
@@ -333,7 +333,7 @@ export class VideoController extends HTMLElement {
 		// Show minute overlay.
 		let minute = Math.floor(time / 60) + 1;
 		this.overlayText.innerHTML = `${minute}'`
-		if (this.#usingYtPlayer()) {
+		if (this.usingYtPlayer()) {
 			// Hide buffering.
 			this.overlayBg.classList.toggle("hidden", false);
 			this.overlayText.classList.toggle("hidden", false);
@@ -443,7 +443,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	#zoom(scale, originX=50, originY=50) {
-		if (this.#usingYtPlayer()) {
+		if (this.usingYtPlayer()) {
 			if (this.ytPlayer) {
 				let iframe = this.ytPlayer.getIframe();
 				iframe.style.transform = `scale(${scale})`;

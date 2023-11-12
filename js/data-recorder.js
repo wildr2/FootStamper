@@ -111,12 +111,7 @@ export class DataRecorder extends HTMLElement {
 
 	#initBrowseVideoInput() {
 		var onChanged = function (event) {
-			var file = this.browseVideoInput.files[0];
-
-			// Remove config video url (match entire line).
-			const regex = /.*(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11}).*\n*/i
-			this.configBox.value = this.configBox.value.replace(regex, "");
-			
+			this.configBox.value = this.#removeVideoUrlFromText(this.configBox.value);
 			this.configBox.oninput();
 			this.configBox.onchange();
 		}
@@ -144,12 +139,17 @@ export class DataRecorder extends HTMLElement {
 		let template = number == 1 ? configTemplate1 : configTemplate2;
 		
 		// Set template without changing video. 
-		let ytVideoId = this.#parseYtVideoId(this.configBox.value);
-		this.configBox.value = template;
-		if (ytVideoId != null) {
-			let lines = this.configBox.value.split("\n");
-			lines[0] = `https://www.youtube.com/watch?v=${ytVideoId}`;
-			this.configBox.value = lines.join("\n");
+		let videoController = document.getElementsByTagName("video-controller")[0];
+		if (videoController.usingYtPlayer()) {
+			let ytVideoId = this.#parseYtVideoId(this.configBox.value);
+			this.configBox.value = template;
+			if (ytVideoId != null) {
+				let lines = this.configBox.value.split("\n");
+				lines[0] = `https://www.youtube.com/watch?v=${ytVideoId}`;
+				this.configBox.value = lines.join("\n");
+			}
+		} else {
+			this.configBox.value = this.#removeVideoUrlFromText(template);
 		}
 
 		this.configBox.oninput();
@@ -163,6 +163,12 @@ export class DataRecorder extends HTMLElement {
 			return m[1];
 		}	
 		return null
+	}
+
+	#removeVideoUrlFromText(text) {
+		const regex = /.*(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11}).*\n*/i
+		text = text.replace(regex, "");
+		return text;
 	}
 
 	#parseConfigBox() {
