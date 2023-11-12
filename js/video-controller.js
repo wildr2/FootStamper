@@ -103,7 +103,7 @@ export class VideoController extends HTMLElement {
 	#onFullscreenChanged() {
 		if (document.fullscreenElement) {
 			if (document.fullscreenElement == this.customPlayer && !this.hasShownFullscreenAlert) {
-				window.alert("The fullscreen button doesn't play nice with kittiestats! Use the f hotkey to enter fullscreen instead.");
+				window.alert("This fullscreen doesn't play nice with kittiestats! Use the f hotkey to toggle fullscreen instead.");
 				this.hasShownFullscreenAlert = true;
 			}
 		}
