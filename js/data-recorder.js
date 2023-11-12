@@ -244,6 +244,21 @@ export class DataRecorder extends HTMLElement {
 		}
 	}
 
+	#deleteMostRecentTimestamp(time) {
+		let data = this.dataBox.value;
+		let lines = data.split("\n");
+		
+		for (let i = lines.length - 1; i >= 0; --i) {
+			let timestamp = this.#parseTimestamp(lines[i]);
+			if (timestamp && timestamp <= time)	{
+				lines.splice(i, 1);
+				break;
+			}
+		}
+
+		this.dataBox.value = lines.join("\n");
+	}
+
 	#getMateName(index) {
 		if (index >= 0 && index < this.squadmates.length) {
 			return this.squadmates[index];
@@ -280,9 +295,10 @@ export class DataRecorder extends HTMLElement {
 				this.#selectMate(mateIndex);
 			}
 		
-		// Delete last data line.
+		// Delete most recent timestamp.
 		} else if (e.key == "Delete") {
-			this.dataBox.value = this.dataBox.value.replace(/\r?\n?[^\r\n]*$/, "");	
+			let videoTime = document.getElementsByTagName("video-controller")[0].getCurrentTime();
+			this.#deleteMostRecentTimestamp(videoTime);
 			
 		// Ignore alpha keys reserved for other hotkeys.
 		} else if (/^j|k|l|q|w|e|r|t|f$/.test(e.key)) {
