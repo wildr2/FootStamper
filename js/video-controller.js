@@ -222,7 +222,7 @@ export class VideoController extends HTMLElement {
 		}
 
 		this.customPlayer.classList.toggle("hidden", showYtPlayer);
-		this.showControlsCheckbox.classList.toggle("hidden", showYtPlayer);
+		this.showControlsCheckbox.parentElement.classList.toggle("hidden", showYtPlayer);
 		if (showYtPlayer) {
 			this.customPlayer.src = null;
 		}

@@ -131,6 +131,7 @@ table {
 .video-section__custom-player {
 	display: block;
 	width: 100%;
+	height: 100vh;
 }
 .video-section__custom-player-input {
 }
