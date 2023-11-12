@@ -1,5 +1,4 @@
 # footstamper
-
 A tool for reviewing sports footage.
 
 Features
