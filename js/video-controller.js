@@ -1,16 +1,24 @@
-import { defaultVideoId } from "./common.js"
+import { defaultYtVideoId } from "./common.js"
 
 export class VideoController extends HTMLElement {
 	constructor() {
 		super();
 
 		this.ytPlayer = null;
+		this.ytPlayerReady = false;
+		this.customPlayer = document.getElementsByClassName("video-section__custom-player")[0];
+		this.customPlayerFile = null;
+
 		this.hasShownFullscreenAlert = false;
 		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
+		this.showControlsCheckbox = document.getElementById("show-controls-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
 
 		this.overlayText = document.getElementsByClassName("overlay-text")[0];
-		this.hideOverlayTextTimeout = null;
+		this.overlayBg = document.getElementsByClassName("overlay-bg")[0];
+		this.seekingToEvent = false;
+		this.showOverlayTextTime = -1;
+		this.eventSeekTime = -1;
 
 		this.minZoomPos = -2
 		this.maxZoomPos = 2
@@ -33,6 +41,24 @@ export class VideoController extends HTMLElement {
 	}
 
 	#init() {
+		this.#initYTPlayer();
+		
+		// Animation.
+		requestAnimationFrame(this.#animationStep.bind(this));
+
+		// Handle config changes.
+		this.dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
+
+		addEventListener("keypress", this.#onKeyPress.bind(this));
+		addEventListener("keydown", this.#onKeyDown.bind(this));
+		document.addEventListener('fullscreenchange', this.#onFullscreenChanged.bind(this));
+
+		this.showControlsCheckbox.onchange = function() {
+			this.customPlayer.controls = this.showControlsCheckbox.checked;
+		}.bind(this);
+	}
+
+	#initYTPlayer() {
 		// Loads the IFrame Player API code asynchronously.
 		var tag = document.createElement("script");
 		tag.src = "https://www.youtube.com/iframe_api";
@@ -45,13 +71,16 @@ export class VideoController extends HTMLElement {
 			
 			// Determine videoId.
 			let params = new URLSearchParams(location.search);
-			let urlVideoId = params.get("v");
-			let videoId = urlVideoId != null && urlVideoId.length > 0 ? urlVideoId : defaultVideoId;
+			let urlYtVideoId = params.get("v");
+			let videoId = urlYtVideoId != null && urlYtVideoId.length > 0 ? urlYtVideoId : defaultYtVideoId;
 
 			this.ytPlayer = new YT.Player("player", {
 				videoId: videoId,
 				playerVars: {
-					"playsinline": 1
+					"playsinline": 1,
+					"fs": 0,
+					"rel": 0,
+					"color": "white"
 				},
 				events: {
 					"onReady": onPlayerReady,
@@ -63,28 +92,18 @@ export class VideoController extends HTMLElement {
 
 		// Called by YT API. Function must be defined.
 		window.onPlayerReady = (e) => {
-			document.ytPlayerDoc = this.ytPlayer.getIframe().contentDocument;
+			this.ytPlayerReady = true;
 		};
 
 		// Called by YT API. Function must be defined.
 		window.onPlayerStateChange = (e) => {
 		};
-
-		// Animation.
-		requestAnimationFrame(this.#animationStep.bind(this));
-
-		// Handle config changes.
-		this.dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
-
-		addEventListener("keypress", this.#onKeyPress.bind(this));
-		addEventListener("keydown", this.#onKeyDown.bind(this));
-		document.addEventListener('fullscreenchange', this.#onFullscreenChanged.bind(this));
 	}
 
 	#onFullscreenChanged() {
 		if (document.fullscreenElement) {
-			if (document.fullscreenElement.tagName == "IFRAME" && !this.hasShownFullscreenAlert) {
-				window.alert("YouTube's fullscreen button doesn't play nice with kittiestats! Use the f hotkey to enter fullscreen instead.");
+			if (document.fullscreenElement == this.customPlayer && !this.hasShownFullscreenAlert) {
+				window.alert("This fullscreen doesn't play nice with kittiestats! Use the f hotkey to toggle fullscreen instead.");
 				this.hasShownFullscreenAlert = true;
 			}
 		}
@@ -94,13 +113,21 @@ export class VideoController extends HTMLElement {
 	}
 
 	#onConfigChanged(dataRecorder) {
-		if (this.ytPlayer && this.ytPlayer.getVideoData) {
-			let oldVideoId = this.ytPlayer.getVideoData()['video_id'];
-			let newVideoId = dataRecorder.videoId;
-			if (newVideoId != oldVideoId) {
-				this.ytPlayer.loadVideoById(newVideoId);
-			}
-		}	
+		// Youtube video.
+		let ytVideoId = dataRecorder.getYtVideoId();
+		if (ytVideoId) {
+			this.#playYtVideo(ytVideoId);
+			this.#showPlayer(true);
+			return;
+		}
+
+		// Custom video.
+		let customVideoFile = dataRecorder.getCustomVideoFile();
+		if (customVideoFile) {
+			this.#playCustomVideo(customVideoFile);
+			this.#showPlayer(false);
+			return;
+		}
 	}
 
 	#onKeyDown(e) {
@@ -130,19 +157,19 @@ export class VideoController extends HTMLElement {
 				document.exitFullscreen();
 			}
 		} else if (e.key == "k") {
-			if (player.getPlayerState() != 1) {
-				player.playVideo();
+			if (this.isPlaying()) {
+				this.#pause();
 			} else {
-				player.pauseVideo();
+				this.#play();
 			}
 		} else if (e.key == "j") {
-			player.seekTo(player.getCurrentTime() - 5);
+			this.#seekTo(this.getCurrentTime() - 5);
 		} else if (e.key == "l") {
-			player.seekTo(player.getCurrentTime() + 5);
+			this.#seekTo(this.getCurrentTime() + 5);
 		} else if (e.key == ",") {
-			player.seekTo(player.getCurrentTime() - 0.1);
+			this.#seekTo(this.getCurrentTime() - 0.1);
 		} else if (e.key == ".") {
-			player.seekTo(player.getCurrentTime() + 0.1);
+			this.#seekTo(this.getCurrentTime() + 0.1);
 		} else if (e.key == "q") {
 			this.#setZoomLevelPos(this.maxZoomLevel, -2)
 		} else if (e.key == "w") {
@@ -158,12 +185,114 @@ export class VideoController extends HTMLElement {
 		}
 	}
 
-	#modulo(value, n) {
-		return ((value % n) + n) % n;
+	#playYtVideo(videoId) {
+		if (this.ytPlayer && this.ytPlayer.getVideoData) {
+			let oldVideoId = this.ytPlayer.getVideoData()['video_id'];
+			if (videoId != oldVideoId) {
+				this.ytPlayer.loadVideoById(videoId);
+			}
+		}	
+	}
+
+	#playCustomVideo(file) {
+		if (this.customPlayerFile == file)
+		{
+			return;
+		}
+		var canPlay = this.customPlayer.canPlayType(file.type);
+		var isError = canPlay === 'no';
+		if (isError) {
+			return;
+		}
+		this.customPlayerFile = file;
+		this.customPlayer.src = URL.createObjectURL(file);
+	}
+
+	#usingYtPlayer() {
+		return this.customPlayer.classList.contains("hidden")
+	}
+
+	#showPlayer(showYtPlayer) {
+		if (this.ytPlayer) {
+			let iframe = this.ytPlayer.getIframe();
+			iframe.classList.toggle("hidden", !showYtPlayer);
+			if (!showYtPlayer) {
+				this.ytPlayer.stopVideo();
+			}
+		}
+
+		this.customPlayer.classList.toggle("hidden", showYtPlayer);
+		this.showControlsCheckbox.parentElement.classList.toggle("hidden", showYtPlayer);
+		if (showYtPlayer) {
+			this.customPlayer.src = null;
+		}
+	}
+
+	#play() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				this.ytPlayer.playVideo();
+			}
+		} else {
+			this.customPlayer.play();
+		}
+	}
+
+	#pause() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				this.ytPlayer.pauseVideo();
+			}
+		} else {
+			this.customPlayer.pause();
+		}
+	}
+
+	isPlaying() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				return this.ytPlayer.getPlayerState() == YT.PlayerState.PLAYING;
+			}
+		} else {
+			return !this.customPlayer.paused;
+		}
+		return false;
+	}
+
+	isBuffering() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				return this.ytPlayer.getPlayerState() == YT.PlayerState.BUFFERING;
+			}
+		} else {
+			return this.customPlayer.waiting;
+		}
+		return false;
+	}
+
+	getCurrentTime() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				return this.ytPlayer.getCurrentTime();
+			}
+		} else {
+			return this.customPlayer.currentTime;
+		}
+		return false;
+	}
+
+	#seekTo(time) {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				this.ytPlayer.seekTo(time);
+			}
+		} else {
+			this.customPlayer.currentTime = time;
+		}
 	}
 
 	#seekToNextEvent() {
-		let t = this.ytPlayer.getCurrentTime();
+		let t = this.getCurrentTime();
 		let timestamps = this.dataRecorder.getEventTimestamps();
 		timestamps.push(t);
 		timestamps = Array.from(new Set(timestamps));
@@ -178,7 +307,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	#seekToPrevEvent() {
-		let t = this.ytPlayer.getCurrentTime();
+		let t = this.getCurrentTime();
 		let timestamps = this.dataRecorder.getEventTimestamps();
 		timestamps.push(t);
 		timestamps = Array.from(new Set(timestamps));
@@ -188,26 +317,31 @@ export class VideoController extends HTMLElement {
 		let i = timestamps.indexOf(t);
 		if (i >= 0 && timestamps.length > 1) {
 			i = this.#modulo(i - 1, timestamps.length);
+			
+			if (t >= timestamps[i] && t - timestamps[i] < 3) {
+				i = this.#modulo(i - 1, timestamps.length);
+			}
+
 			this.#seekToEventTime(timestamps[i]);
 		}
 	}
 
 	#seekToEventTime(time) {
-		this.ytPlayer.seekTo(time);
-		
-		this.#resetCamera();
+		this.#seekTo(time);
+		this.#play();
 
 		// Show minute overlay.
 		let minute = Math.floor(time / 60) + 1;
 		this.overlayText.innerHTML = `${minute}'`
-		this.overlayText.classList.toggle("overlay-text--hidden", false);
-
-		if (this.hideOverlayTextTimeout) {
-			clearTimeout(this.hideOverlayTextTimeout);
+		if (this.#usingYtPlayer()) {
+			// Hide buffering.
+			this.overlayBg.classList.toggle("hidden", false);
+			this.overlayText.classList.toggle("hidden", false);
+		} else {
+			this.overlayText.classList.toggle("hidden", true);
 		}
-		this.hideOverlayTextTimeout = setTimeout(function() {
-			this.overlayText.classList.toggle("overlay-text--hidden", true);
-		}.bind(this), 1500);
+		this.seekingToEvent = true;
+		this.eventSeekTime = time;
 	}
 
 	#getToggledZoomLevel() {
@@ -240,9 +374,29 @@ export class VideoController extends HTMLElement {
 
 		this.#zoom(this.zoomScale, this.zoomOriginX);
 
-		// Prevent Iframe from stealing focus!
-		if (!this.allowFocusCheckbox.checked && document.activeElement.tagName == "IFRAME") {
-			document.activeElement.blur();
+		// Prevent player from stealing focus!
+		if (!this.allowFocusCheckbox.checked) {
+			if (document.activeElement.tagName == "IFRAME" || document.activeElement == this.customPlayer) {
+				document.activeElement.blur();
+			}
+		}
+
+		// Seek to event completion / overlay text.
+		let overlayTextDuration = 1.5;
+		if (this.seekingToEvent) {
+			let timePastSeekTime = this.getCurrentTime() - this.eventSeekTime;
+			if (timePastSeekTime > 0 && timePastSeekTime < 1) {
+				// Seek completed.
+				this.seekingToEvent = false;
+				this.showOverlayTextTime = time;
+				this.overlayText.classList.toggle("hidden", false);
+				this.overlayBg.classList.toggle("hidden", true);
+				this.#resetCamera();
+			}
+		} else if (this.showOverlayTextTime >= 0 && time - this.showOverlayTextTime > overlayTextDuration) {
+			// Hide overlay text.
+			this.overlayText.classList.toggle("hidden", true);
+			this.showOverlayTextTime = -1;
 		}
 
 		this.prevAnimateTime = time;
@@ -289,12 +443,20 @@ export class VideoController extends HTMLElement {
 	}
 
 	#zoom(scale, originX=50, originY=50) {
-		if (!this.ytPlayer) {
-			return
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				let iframe = this.ytPlayer.getIframe();
+				iframe.style.transform = `scale(${scale})`;
+				iframe.style.transformOrigin = `${originX}% ${originY}%`;
+			}
+		} else {
+			this.customPlayer.style.transform = `scale(${scale})`;
+			this.customPlayer.style.transformOrigin = `${originX}% ${originY}%`;
 		}
-		let iframe = this.ytPlayer.getIframe();
-		iframe.style.transform = `scale(${scale})`;
-		iframe.style.transformOrigin = `${originX}% ${originY}%`
+	}
+
+	#modulo(value, n) {
+		return ((value % n) + n) % n;
 	}
 }
 

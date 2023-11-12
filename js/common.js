@@ -1,4 +1,4 @@
-export const defaultVideoId = "LfduUFF_i1A" 
+export const defaultYtVideoId = "LfduUFF_i1A" 
 export const configTemplate1 = 
 `https://www.youtube.com/watch?v=LfduUFF_i1A
 
