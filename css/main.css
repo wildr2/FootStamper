@@ -105,6 +105,15 @@ table {
 	resize: none;
 	overflow-y: hidden;
 }
+.title-section__config-buttons {
+	display: flex;
+}
+.title-section__config-buttons > span {
+	white-space: nowrap;
+}
+.title-section__browse-video-input {
+	width: 100%;
+}
 .title-section__hotkeys {
 	width: 50%;
 	columns: 2;

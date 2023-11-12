@@ -12,12 +12,11 @@ export class DataRecorder extends HTMLElement {
 		// args: dataRecorder
 		this.configChangedCallbacks = [];
 		this.configBox = document.getElementsByClassName("title-section__config")[0];
-		this.config1Button = document.getElementById("config-1-button");
-		this.config2Button = document.getElementById("config-2-button");
+		this.config1Button = document.getElementsByClassName("title-section__config-button-1")[0];
+		this.config2Button = document.getElementsByClassName("title-section__config-button-2")[0];
+		this.browseVideoInput = document.getElementsByClassName("title-section__browse-video-input")[0]
 		this.dataBox = document.getElementsByClassName("databox__textarea")[0];
 		this.showOverlayCheckbox = document.getElementById("show-overlay-checkbox");
-		// args: browseVideoInput.
-		this.browseVideoInput = document.getElementsByClassName("video-section__custom-player-input")[0]
 
 		this.#init();
 	}

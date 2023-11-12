@@ -171,15 +171,15 @@ export class VideoController extends HTMLElement {
 			this.#seekTo(this.getCurrentTime() - 0.1);
 		} else if (e.key == ".") {
 			this.#seekTo(this.getCurrentTime() + 0.1);
-		} else if (e.key == "q") {
+		} else if (e.key == "Q") {
 			this.#setZoomLevelPos(this.maxZoomLevel, -2)
-		} else if (e.key == "w") {
+		} else if (e.key == "q") {
 			this.#setZoomLevelPos(this.maxZoomLevel, -1)
-		} else if (e.key == "e") {
+		} else if (e.key == "w") {
 			this.#setZoomLevelPos(this.maxZoomLevel, 0)
-		} else if (e.key == "r") {
+		} else if (e.key == "e") {
 			this.#setZoomLevelPos(this.maxZoomLevel, 1)
-		} else if (e.key == "t") {
+		} else if (e.key == "E") {
 			this.#setZoomLevelPos(this.maxZoomLevel, 2)
 		} else if (e.key == " ") {
 			this.#setZoomLevelPos(this.#getToggledZoomLevel(), this.zoomLevel)
