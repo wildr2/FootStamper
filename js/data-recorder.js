@@ -137,12 +137,17 @@ export class DataRecorder extends HTMLElement {
 		}
 		let template = number == 1 ? configTemplate1 : configTemplate2;
 		
-		// Set template without changing video. 
+		// Set template without changing video.
+		// (Unless the config is unchanged from a template, in that case take the video of the new template).
 		let videoController = document.getElementsByTagName("video-controller")[0];
 		if (videoController.usingYtPlayer()) {
+			let isConfigUnchanged = this.configBox.value == configTemplate1 || this.configBox.value == configTemplate2
 			let ytVideoId = this.#parseYtVideoId(this.configBox.value);
+
 			this.configBox.value = template;
-			if (ytVideoId != null) {
+
+			if (ytVideoId != null && !isConfigUnchanged) {
+				// Keep current video.
 				let lines = this.configBox.value.split("\n");
 				lines[0] = `https://www.youtube.com/watch?v=${ytVideoId}`;
 				this.configBox.value = lines.join("\n");
