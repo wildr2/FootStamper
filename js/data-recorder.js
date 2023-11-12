@@ -283,9 +283,9 @@ export class DataRecorder extends HTMLElement {
 
 		// Record event.
 		} else if (/^[a-zA-Z]$/.test(e.key) && e.key in this.dataEvents) {
-			let ytPlayer = document.getElementsByTagName("video-controller")[0].ytPlayer;
+			let videoTime = document.getElementsByTagName("video-controller")[0].getCurrentTime();
 
-			let time = ytPlayer ? this.#secondsToHHMMSS(ytPlayer.getCurrentTime()) : 0;
+			let time = this.#secondsToHHMMSS(videoTime);
 			let eventName = this.dataEvents[e.key] || "";
 			let mateName = this.#getMateName(this.selectedMateIndex);
 

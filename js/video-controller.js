@@ -70,7 +70,10 @@ export class VideoController extends HTMLElement {
 			this.ytPlayer = new YT.Player("player", {
 				videoId: videoId,
 				playerVars: {
-					"playsinline": 1
+					"playsinline": 1,
+					"fs": 0,
+					"rel": 0,
+					"color": "white"
 				},
 				events: {
 					"onReady": onPlayerReady,
@@ -78,17 +81,6 @@ export class VideoController extends HTMLElement {
 				}
 			});
 			document.ytPlayer = this.ytPlayer;
-
-			new YT.Player("player2", {
-				videoId: videoId,
-				playerVars: {
-					"playsinline": 1
-				},
-				events: {
-					"onReady": onPlayerReady,
-					"onStateChange": onPlayerStateChange
-				}
-			});
 		};
 
 		// Called by YT API. Function must be defined.
@@ -103,8 +95,8 @@ export class VideoController extends HTMLElement {
 
 	#onFullscreenChanged() {
 		if (document.fullscreenElement) {
-			if (document.fullscreenElement.tagName == "IFRAME" && !this.hasShownFullscreenAlert) {
-				window.alert("YouTube's fullscreen button doesn't play nice with kittiestats! Use the f hotkey to enter fullscreen instead.");
+			if (document.fullscreenElement == this.customPlayer && !this.hasShownFullscreenAlert) {
+				window.alert("The fullscreen button doesn't play nice with kittiestats! Use the f hotkey to enter fullscreen instead.");
 				this.hasShownFullscreenAlert = true;
 			}
 		}
@@ -158,19 +150,19 @@ export class VideoController extends HTMLElement {
 				document.exitFullscreen();
 			}
 		} else if (e.key == "k") {
-			if (player.getPlayerState() != 1) {
-				player.playVideo();
+			if (this.isPlaying()) {
+				this.#pause();
 			} else {
-				player.pauseVideo();
+				this.#play();
 			}
 		} else if (e.key == "j") {
-			player.seekTo(player.getCurrentTime() - 5);
+			this.#seekTo(this.getCurrentTime() - 5);
 		} else if (e.key == "l") {
-			player.seekTo(player.getCurrentTime() + 5);
+			this.#seekTo(this.getCurrentTime() + 5);
 		} else if (e.key == ",") {
-			player.seekTo(player.getCurrentTime() - 0.1);
+			this.#seekTo(this.getCurrentTime() - 0.1);
 		} else if (e.key == ".") {
-			player.seekTo(player.getCurrentTime() + 0.1);
+			this.#seekTo(this.getCurrentTime() + 0.1);
 		} else if (e.key == "q") {
 			this.#setZoomLevelPos(this.maxZoomLevel, -2)
 		} else if (e.key == "w") {
@@ -209,6 +201,10 @@ export class VideoController extends HTMLElement {
 		this.customPlayer.src = URL.createObjectURL(file);
 	}
 
+	#usingYtPlayer() {
+		return this.customPlayer.classList.contains("hidden")
+	}
+
 	#showPlayer(showYtPlayer) {
 		if (this.ytPlayer) {
 			let iframe = this.ytPlayer.getIframe();
@@ -224,12 +220,60 @@ export class VideoController extends HTMLElement {
 		}
 	}
 
-	#modulo(value, n) {
-		return ((value % n) + n) % n;
+	#play() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				this.ytPlayer.playVideo();
+			}
+		} else {
+			this.customPlayer.play();
+		}
+	}
+
+	#pause() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				this.ytPlayer.pauseVideo();
+			}
+		} else {
+			this.customPlayer.pause();
+		}
+	}
+
+	isPlaying() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				return this.ytPlayer.getPlayerState() == YT.PlayerState.PLAYING;
+			}
+		} else {
+			return !this.customPlayer.paused;
+		}
+		return false;
+	}
+
+	getCurrentTime() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				return this.ytPlayer.getCurrentTime();
+			}
+		} else {
+			return this.customPlayer.currentTime;
+		}
+		return false;
+	}
+
+	#seekTo(time) {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				this.ytPlayer.seekTo(time);
+			}
+		} else {
+			this.customPlayer.currentTime = time;
+		}
 	}
 
 	#seekToNextEvent() {
-		let t = this.ytPlayer.getCurrentTime();
+		let t = this.getCurrentTime();
 		let timestamps = this.dataRecorder.getEventTimestamps();
 		timestamps.push(t);
 		timestamps = Array.from(new Set(timestamps));
@@ -244,7 +288,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	#seekToPrevEvent() {
-		let t = this.ytPlayer.getCurrentTime();
+		let t = this.getCurrentTime();
 		let timestamps = this.dataRecorder.getEventTimestamps();
 		timestamps.push(t);
 		timestamps = Array.from(new Set(timestamps));
@@ -259,9 +303,9 @@ export class VideoController extends HTMLElement {
 	}
 
 	#seekToEventTime(time) {
-		this.ytPlayer.seekTo(time);
-		
+		this.#seekTo(time);
 		this.#resetCamera();
+		this.#play();
 
 		// Show minute overlay.
 		let minute = Math.floor(time / 60) + 1;
@@ -272,7 +316,7 @@ export class VideoController extends HTMLElement {
 		}
 		this.hideOverlayTextTimeout = setTimeout(function() {
 			this.overlayText.classList.toggle("overlay-text--hidden", true);
-			this.ytPlayer.playVideo();
+			// this.ytPlayer.playVideo();
 		}.bind(this), 1500);
 		
 		// Background to hide buffering.
@@ -318,9 +362,11 @@ export class VideoController extends HTMLElement {
 
 		this.#zoom(this.zoomScale, this.zoomOriginX);
 
-		// Prevent Iframe from stealing focus!
-		if (!this.allowFocusCheckbox.checked && document.activeElement.tagName == "IFRAME") {
-			document.activeElement.blur();
+		// Prevent player from stealing focus!
+		if (!this.allowFocusCheckbox.checked) {
+			if (document.activeElement.tagName == "IFRAME" || document.activeElement == this.customPlayer) {
+				document.activeElement.blur();
+			}
 		}
 
 		this.prevAnimateTime = time;
@@ -367,7 +413,7 @@ export class VideoController extends HTMLElement {
 	}
 
 	#zoom(scale, originX=50, originY=50) {
-		if (this.customPlayer.classList.contains("hidden")) {
+		if (this.#usingYtPlayer()) {
 			if (this.ytPlayer) {
 				let iframe = this.ytPlayer.getIframe();
 				iframe.style.transform = `scale(${scale})`;
@@ -377,6 +423,10 @@ export class VideoController extends HTMLElement {
 			this.customPlayer.style.transform = `scale(${scale})`;
 			this.customPlayer.style.transformOrigin = `${originX}% ${originY}%`;
 		}
+	}
+
+	#modulo(value, n) {
+		return ((value % n) + n) % n;
 	}
 }
 
