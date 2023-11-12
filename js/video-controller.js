@@ -1,4 +1,5 @@
 import { defaultYtVideoId } from "./common.js"
+import Util from "./util.js"
 
 export class VideoController extends HTMLElement {
 	constructor() {
@@ -316,10 +317,10 @@ export class VideoController extends HTMLElement {
 		});
 		let i = timestamps.indexOf(t);
 		if (i >= 0 && timestamps.length > 1) {
-			i = this.#modulo(i - 1, timestamps.length);
+			i = Util.modulo(i - 1, timestamps.length);
 			
 			if (t >= timestamps[i] && t - timestamps[i] < 3) {
-				i = this.#modulo(i - 1, timestamps.length);
+				i = Util.modulo(i - 1, timestamps.length);
 			}
 
 			this.#seekToEventTime(timestamps[i]);
@@ -353,7 +354,7 @@ export class VideoController extends HTMLElement {
 		const dt = time - this.prevAnimateTime
 
 		let zoomTargetTargetScale = this.zoomLevel == this.maxZoomLevel ? this.maxZoomScale : this.minZoomScale;
-		let zoomTargetTargetOriginX = this.#map(this.minZoomPos, this.maxZoomPos, 0, 100, this.zoomPos);
+		let zoomTargetTargetOriginX = Util.map(this.minZoomPos, this.maxZoomPos, 0, 100, this.zoomPos);
 
 		if (this.zoomLevel > this.minZoomLevel && this.prevZoomLevel == this.minZoomLevel) {
 			this.startZoomInTime = time;
@@ -363,14 +364,14 @@ export class VideoController extends HTMLElement {
 			}
 		}
 		
-		this.zoomTargetScale = this.#lerp(this.zoomTargetScale, zoomTargetTargetScale, dt * 3.0);
-		this.zoomScale = this.#lerp(this.zoomScale, this.zoomTargetScale, dt * 3.0);
+		this.zoomTargetScale = Util.lerp(this.zoomTargetScale, zoomTargetTargetScale, dt * 3.0);
+		this.zoomScale = Util.lerp(this.zoomScale, this.zoomTargetScale, dt * 3.0);
 
-		let zoomT = this.#map(this.minZoomScale, this.maxZoomScale, 0.0, 1.0, this.zoomScale);
-		let zoomInLerpFactor = this.#map(0.0, 1.0, dt * 20.0, dt * 1.0, 1.0 - Math.pow(1.0 - zoomT, 4.0));
-		let lerpFactor = this.#map(0.0, 1.0, zoomInLerpFactor, dt * 1.0, time - this.startZoomInTime);
-		this.zoomTargetOriginX = this.#lerp(this.zoomTargetOriginX, zoomTargetTargetOriginX, lerpFactor);
-		this.zoomOriginX = this.#lerp(this.zoomOriginX, this.zoomTargetOriginX, lerpFactor);
+		let zoomT = Util.map(this.minZoomScale, this.maxZoomScale, 0.0, 1.0, this.zoomScale);
+		let zoomInLerpFactor = Util.map(0.0, 1.0, dt * 20.0, dt * 1.0, 1.0 - Math.pow(1.0 - zoomT, 4.0));
+		let lerpFactor = Util.map(0.0, 1.0, zoomInLerpFactor, dt * 1.0, time - this.startZoomInTime);
+		this.zoomTargetOriginX = Util.lerp(this.zoomTargetOriginX, zoomTargetTargetOriginX, lerpFactor);
+		this.zoomOriginX = Util.lerp(this.zoomOriginX, this.zoomTargetOriginX, lerpFactor);
 
 		this.#zoom(this.zoomScale, this.zoomOriginX);
 
@@ -404,30 +405,6 @@ export class VideoController extends HTMLElement {
 		requestAnimationFrame(this.#animationStep.bind(this));
 	}
 
-	#lerp(a, b, t) {
-		t = this.#clamp(t, 0.0, 1.0);
-		return (1 - t) * a + t * b;
-	}
-
-	#clamp(value, min, max) {
-		return Math.min(Math.max(min, value), max);
-	}
-		
-	#map(inputMin, inputMax, outputMin, outputMax, value) {
-		if (inputMin > inputMax) {
-			return this.#map(inputMax, inputMin, outputMax, outputMin, value);
-		}
-		if (value < inputMin) {
-			return outputMin;
-		}
-		else if (value > inputMax) {
-			return outputMax;
-		}
-		else {
-			return (value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin;
-		}
-	}
-
 	#setZoomLevelPos(level, pos) {
 		this.zoomLevel = level;
 		this.zoomPos = pos;
@@ -453,10 +430,6 @@ export class VideoController extends HTMLElement {
 			this.customPlayer.style.transform = `scale(${scale})`;
 			this.customPlayer.style.transformOrigin = `${originX}% ${originY}%`;
 		}
-	}
-
-	#modulo(value, n) {
-		return ((value % n) + n) % n;
 	}
 }
 
