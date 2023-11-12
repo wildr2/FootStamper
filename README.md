@@ -9,6 +9,6 @@ Features
 - Supports Youtube and local videos.
   
 Tips
-- Modify the YouTube URL in the config box to pick a different video. The page URL will update to point to footstamper playing your video of choice.
+- Modify the YouTube URL in the config box to pick a different video. The page URL will update to point to FootStamper playing your video of choice.
 - Delete the "Squad" list in the config box if you don't need to associate players with timestamps. You can also press 0 to select nobody, then record a timestamp without an associated player.
 - In the "Events" section of the config box, specify a key with no corresponding event name if you want to record unnamed timestamps (e.g. "g" instead of "g, goal").
