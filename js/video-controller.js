@@ -5,6 +5,7 @@ export class VideoController extends HTMLElement {
 		super();
 
 		this.ytPlayer = null;
+		this.ytPlayerReady = false;
 		this.customPlayer = document.getElementsByClassName("video-section__custom-player")[0];
 		this.customPlayerFile = null;
 
@@ -14,8 +15,9 @@ export class VideoController extends HTMLElement {
 
 		this.overlayText = document.getElementsByClassName("overlay-text")[0];
 		this.overlayBg = document.getElementsByClassName("overlay-bg")[0];
-		this.hideOverlayTextTimeout;
-		this.hideOverlayBgTimeout;
+		this.seekingToEvent = false;
+		this.showOverlayTextTime = -1;
+		this.eventSeekTime = -1;
 
 		this.minZoomPos = -2
 		this.maxZoomPos = 2
@@ -85,7 +87,7 @@ export class VideoController extends HTMLElement {
 
 		// Called by YT API. Function must be defined.
 		window.onPlayerReady = (e) => {
-			document.ytPlayerDoc = this.ytPlayer.getIframe().contentDocument;
+			this.ytPlayerReady = true;
 		};
 
 		// Called by YT API. Function must be defined.
@@ -251,6 +253,17 @@ export class VideoController extends HTMLElement {
 		return false;
 	}
 
+	isBuffering() {
+		if (this.#usingYtPlayer()) {
+			if (this.ytPlayer) {
+				return this.ytPlayer.getPlayerState() == YT.PlayerState.BUFFERING;
+			}
+		} else {
+			return this.customPlayer.waiting;
+		}
+		return false;
+	}
+
 	getCurrentTime() {
 		if (this.#usingYtPlayer()) {
 			if (this.ytPlayer) {
@@ -304,32 +317,15 @@ export class VideoController extends HTMLElement {
 
 	#seekToEventTime(time) {
 		this.#seekTo(time);
-		this.#resetCamera();
 		this.#play();
 
 		// Show minute overlay.
 		let minute = Math.floor(time / 60) + 1;
 		this.overlayText.innerHTML = `${minute}'`
 		this.overlayText.classList.toggle("overlay-text--hidden", false);
-		if (this.hideOverlayTextTimeout) {
-			clearTimeout(this.hideOverlayTextTimeout);
-		}
-		this.hideOverlayTextTimeout = setTimeout(function() {
-			this.overlayText.classList.toggle("overlay-text--hidden", true);
-			// this.ytPlayer.playVideo();
-		}.bind(this), 1500);
-		
-		// Background to hide buffering.
-		// this.overlayBg.classList.toggle("overlay-bg--hidden", false);
-		// if (this.hideOverlayBgTimeout) {
-		// 	clearInterval(this.hideOverlayBgTimeout);
-		// }
-		// this.hideOverlayBgTimeout = setInterval(function() {
-		// 	if (this.ytPlayer.getPlayerState() != YT.PlayerState.BUFFERING) {
-		// 		this.overlayBg.classList.toggle("overlay-bg--hidden", true);
-		// 		clearInterval(this.hideOverlayBgTimeout);
-		// 	}
-		// }.bind(this), 100);
+		this.overlayBg.classList.toggle("overlay-bg--hidden", false);
+		this.seekingToEvent = true;
+		this.eventSeekTime = time;
 	}
 
 	#getToggledZoomLevel() {
@@ -367,6 +363,24 @@ export class VideoController extends HTMLElement {
 			if (document.activeElement.tagName == "IFRAME" || document.activeElement == this.customPlayer) {
 				document.activeElement.blur();
 			}
+		}
+
+		// Seek to event completion / overlay text.
+		let overlayTextDuration = 1.5;
+		if (this.seekingToEvent) {
+			let timePastSeekTime = this.getCurrentTime() - this.eventSeekTime;
+			if (timePastSeekTime > 0 && timePastSeekTime < 1) {
+				// Seek completed.
+				this.seekingToEvent = false;
+				this.showOverlayTextTime = time;
+				this.overlayText.classList.toggle("overlay-text--hidden", false);
+				this.overlayBg.classList.toggle("overlay-bg--hidden", true);
+				this.#resetCamera();
+			}
+		} else if (this.showOverlayTextTime >= 0 && time - this.showOverlayTextTime > overlayTextDuration) {
+			// Hide overlay text.
+			this.overlayText.classList.toggle("overlay-text--hidden", true);
+			this.showOverlayTextTime = -1;
 		}
 
 		this.prevAnimateTime = time;
