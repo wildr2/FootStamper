@@ -25,4 +25,8 @@ export const configTemplate2 =
 
 Events
 	g, goal
-	h, highlight`;
+	h, highlight
+
+Clock
+	00:00:00, 00:00:00
+	00:45:00, 00:45:00`;
