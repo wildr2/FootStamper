@@ -1,4 +1,5 @@
 import { defaultYtVideoId } from "./common.js"
+import { GameClock } from "./game-clock.js"
 import Util from "./util.js"
 
 export class VideoController extends HTMLElement {
@@ -14,11 +15,12 @@ export class VideoController extends HTMLElement {
 		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
 		this.showControlsCheckbox = document.getElementById("show-controls-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
+		this.gameClock = new GameClock(this.dataRecorder);
 
 		this.overlayText = document.getElementsByClassName("overlay-text")[0];
 		this.overlayBg = document.getElementsByClassName("overlay-bg")[0];
-		this.seekingToEvent = false;
 		this.showOverlayTextTime = -1;
+		this.seekingToEvent = false;
 		this.eventSeekTime = -1;
 
 		this.minZoomPos = -2
@@ -332,7 +334,8 @@ export class VideoController extends HTMLElement {
 		this.#play();
 
 		// Show minute overlay.
-		let minute = Math.floor(time / 60) + 1;
+		let clockTime = this.gameClock.getTime(time); 
+		let minute = Math.floor(clockTime / 60) + 1;
 		this.overlayText.innerHTML = `${minute}'`
 		if (this.usingYtPlayer()) {
 			// Hide buffering.
