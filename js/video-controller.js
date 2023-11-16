@@ -18,7 +18,7 @@ export class VideoController extends HTMLElement {
 		this.showScoreWidgetCheckbox = document.getElementById("show-score-widget-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
 		this.gameClock = new GameClock();
-		this.scoreWidgetController = new ScoreWidgetController(this.dataRecorder, this.gameClock);
+		this.scoreWidgetController = new ScoreWidgetController(this.gameClock);
 
 		this.overlayText = document.getElementsByClassName("overlay-text")[0];
 		this.overlayBg = document.getElementsByClassName("overlay-bg")[0];
@@ -54,6 +54,7 @@ export class VideoController extends HTMLElement {
 
 		// Handle config changes.
 		this.dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
+		this.dataRecorder.subscribeDataChanged(this.#onDataChanged.bind(this));
 
 		addEventListener("keypress", this.#onKeyPress.bind(this));
 		addEventListener("keydown", this.#onKeyDown.bind(this));
@@ -120,6 +121,10 @@ export class VideoController extends HTMLElement {
 		else {
 			this.hasShownFullscreenAlert = false;
 		}
+	}
+
+	#onDataChanged(dataRecorder) {
+		this.scoreWidgetController.onDataChanged(dataRecorder);
 	}
 
 	#onConfigChanged(dataRecorder) {

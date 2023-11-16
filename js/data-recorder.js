@@ -10,14 +10,17 @@ export class DataRecorder extends HTMLElement {
 		this.squadmates = [];
 		// { key, name }, eg. { "g", "goal" }
 		this.dataEvents = [];
-		// args: dataRecorder
-		this.configChangedCallbacks = [];
 		this.configBox = document.getElementsByClassName("title-section__config")[0];
 		this.config1Button = document.getElementsByClassName("title-section__config-button-1")[0];
 		this.config2Button = document.getElementsByClassName("title-section__config-button-2")[0];
 		this.browseVideoInput = document.getElementsByClassName("title-section__browse-video-input")[0]
 		this.dataBox = document.getElementsByClassName("databox__textarea")[0];
 		this.showOverlayCheckbox = document.getElementById("show-overlay-checkbox");
+		this.videoController = document.getElementsByTagName("video-controller")[0];
+		// args: dataRecorder
+		this.configChangedCallbacks = [];
+		// args: dataRecorder
+		this.dataChangedCallbacks = [];
 
 		this.#init();
 	}
@@ -26,12 +29,20 @@ export class DataRecorder extends HTMLElement {
 		this.configChangedCallbacks.push(callback);
 	}
 
+	subscribeDataChanged(callback) {
+		this.dataChangedCallbacks.push(callback);
+	}
+
 	subscribeBrowseVideoInputChanged(callback) {
 		this.browseVideoInputChangedCallbacks.push(callback);
 	}
 
 	getConfigText() {
 		return this.configBox.value;
+	}
+
+	getDataText() {
+		return this.dataBox.value;
 	}
 
 	getYtVideoId() {
@@ -134,6 +145,9 @@ export class DataRecorder extends HTMLElement {
 		let lines = this.dataBox.value.split("\n");
 		lines.sort();
 		this.dataBox.value = lines.join("\n");
+		
+		// Callbacks.
+		this.dataChangedCallbacks.forEach(callback => callback(this));
 	}
 
 	#applyConfigTemplate(number) {
@@ -144,8 +158,7 @@ export class DataRecorder extends HTMLElement {
 		
 		// Set template without changing video.
 		// (Unless the config is unchanged from a template, in that case take the video of the new template).
-		let videoController = document.getElementsByTagName("video-controller")[0];
-		if (videoController.usingYtPlayer()) {
+		if (this.videoController.usingYtPlayer()) {
 			let isConfigUnchanged = this.configBox.value == configTemplate1 || this.configBox.value == configTemplate2
 			let ytVideoId = this.#parseYtVideoId(this.configBox.value);
 
@@ -287,7 +300,7 @@ export class DataRecorder extends HTMLElement {
 		
 		// Delete most recent timestamp.
 		} else if (e.key == "Delete") {
-			let videoTime = document.getElementsByTagName("video-controller")[0].getCurrentTime();
+			let videoTime = this.videoController.getCurrentTime();
 			this.#deleteMostRecentTimestamp(videoTime);
 			
 		// Ignore alpha keys reserved for other hotkeys.
@@ -295,20 +308,32 @@ export class DataRecorder extends HTMLElement {
 
 		// Record event.
 		} else if (/^[a-zA-Z]$/.test(e.key) && e.key in this.dataEvents) {
-			let videoTime = document.getElementsByTagName("video-controller")[0].getCurrentTime();
-
-			let time = Util.secondsToHHMMSS(videoTime);
+			let videoTime = this.videoController.getCurrentTime();
+			let time = Util.secondsToTimestamp(videoTime);
 			let eventName = this.dataEvents[e.key] || "";
 			let mateName = this.#getMateName(this.selectedMateIndex);
-
-			if (this.dataBox.value.length > 0) {
-				this.dataBox.value += "\n";
-			}
-			this.dataBox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}` : "");
-			this.dataBox.scrollTop = this.dataBox.scrollHeight;
-			
-			this.#onDataChanged();
+			this.#recordMatchEvent(time, eventName, mateName);
+		} else if (e.key == "[") {
+			let videoTime = this.videoController.getCurrentTime();
+			let time = Util.secondsToTimestamp(videoTime);
+			let eventName = "#+1<"
+			this.#recordMatchEvent(time, eventName, null);
+		} else if (e.key == "]") {
+			let videoTime = this.videoController.getCurrentTime();
+			let time = Util.secondsToTimestamp(videoTime);
+			let eventName = "#+1>"
+			this.#recordMatchEvent(time, eventName, null);
 		}
+	}
+
+	#recordMatchEvent(time, eventName, mateName) {
+		if (this.dataBox.value.length > 0) {
+			this.dataBox.value += "\n";
+		}
+		this.dataBox.value += `${time}` + (eventName ? `, ${eventName}` : "") + (mateName ? `, ${mateName}` : "");
+		this.dataBox.scrollTop = this.dataBox.scrollHeight;
+		
+		this.#onDataChanged();
 	}
 
 	#updateViewSquadSelection() {

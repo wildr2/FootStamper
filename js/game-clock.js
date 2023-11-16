@@ -2,7 +2,7 @@ import Util from "./util.js"
 
 class GameClock {
 	constructor() {
-		// [[video seconds, clock seconds], [...], ...], ordered by video seconds
+		// [[video seconds, clock seconds], ...] ordered by video seconds
 		this.clockSyncPairs = [];
 	}
 
@@ -10,7 +10,6 @@ class GameClock {
 		// Clock
 		// 		00:00:00, 00:00:00
 		// 		00:45:00, 00:45:00
-		
 		let configText = dataRecorder.getConfigText();
 		this.clockSyncPairs = [];
 		const clockRegex = /^Clock\n((\t|\s).*\n*)*/gm;

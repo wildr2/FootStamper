@@ -1,9 +1,10 @@
 import Util from "./util.js"
 
 class ScoreWidgetController {
-	constructor(dataRecorder, gameClock) {
-		this.dataRecorder = dataRecorder;
+	constructor(gameClock) {
 		this.gameClock = gameClock;
+		// [[video seconds, delta score, team index], ...] ordered by video seconds
+		this.scoreChangeEvents = []
 
 		// this.widget = document.querySelector(".score-widget");
 		this.leftBox = document.querySelector(".score-widget__box--left");
@@ -16,7 +17,6 @@ class ScoreWidgetController {
 	}
 
 	setVisible(visible) {
-		console.log("set vis " + visible);
 		let widget = document.querySelector(".score-widget");
 		widget.classList.toggle("hidden", !visible);
 	}
@@ -25,7 +25,6 @@ class ScoreWidgetController {
 		// Sides
 		// 		SR, #white, #black
 		// 		PC, #purple, #white
-
 		let configText = dataRecorder.getConfigText();
 		const sidesRegex = /^Sides\n((\t|\s).*\n*)*/gm;
 		let m = sidesRegex.exec(configText);
@@ -45,6 +44,35 @@ class ScoreWidgetController {
 		}
 	}
 
+	onDataChanged(dataRecorder) {
+		// Score change events.
+
+		// 00:00:00, #+1>
+		// 00:00:00, #-3<
+
+// 		let data = 
+// `00:00:00, #+1<
+// 00:00:00, #+1<
+// 00:01:00, goal
+// 00:04:00, #-3<
+// test`
+
+		let data = dataRecorder.getDataText();
+		const scoreRegex = /^\d{2}:\d{2}:\d{2},\s*#(\+|\-)(\d.*)(<|>)/gm;
+		let m;
+		this.scoreChangeEvents = [];
+		while ((m = scoreRegex.exec(data)) !== null) {
+			let videoSeconds = Util.timestampToSeconds(m[0]);
+			let negative = m[1] == "-";
+			let number = parseInt(m[2], 10);
+			let teamIndex = m[3] == "<" ? 0 : 1;
+			let deltaScore = negative ? -number : number;
+			this.scoreChangeEvents.push([videoSeconds, deltaScore, teamIndex]);
+		}
+		this.scoreChangeEvents.sort(function(a, b) {
+			return a[0] - b[0];
+		});
+	}
 	setupLeftSide(name, color1, color2) {
 		this.leftNameText.innerHTML = name;
 		this.leftBox.style.backgroundColor = color1;
@@ -60,7 +88,20 @@ class ScoreWidgetController {
 	update(videoTime) {
 		this.clockText.innerHTML = Util.secondsToMMSS(this.gameClock.getTime(videoTime));
 
-		// TODO: score.
+		// TODO: Update less frequently? Perf?
+		let score = this.#determineScore(videoTime);
+		this.leftScoreText.innerHTML = score[0];
+		this.rightScoreText.innerHTML = score[1];
+	}
+
+	#determineScore(videoTime) {
+		let score = [0, 0];
+		for (let event of this.scoreChangeEvents) {
+			if (videoTime >= event[0]) {
+				score[event[2]] += event[1]
+			}
+		}
+		return score;
 	}
 }
 
