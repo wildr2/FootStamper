@@ -1,4 +1,5 @@
 import { defaultYtVideoId, configTemplate1, configTemplate2 } from "./common.js"
+import Util from "./util.js"
 
 export class DataRecorder extends HTMLElement {
 	constructor() {
@@ -44,7 +45,7 @@ export class DataRecorder extends HTMLElement {
 		let lines = data.split("\n");
 		let timestamps = [];
 		for (let line of lines) {
-			let timestamp = this.#parseTimestamp(line);
+			let timestamp = Util.timestampToSeconds(line);
 			if (timestamp) {
 				timestamps.push(timestamp);
 			}
@@ -236,8 +237,8 @@ export class DataRecorder extends HTMLElement {
 			let values = lines[i].split(",");
 			let videoTimestampStr = values.length > 0 ? values[0].trim() : "";
 			let clockTimestampStr = values.length > 1 ? values[1].trim() : "";
-			let videoSeconds = this.#parseTimestamp(videoTimestampStr);
-			let clockSeconds = this.#parseTimestamp(clockTimestampStr);
+			let videoSeconds = Util.timestampToSeconds(videoTimestampStr);
+			let clockSeconds = Util.timestampToSeconds(clockTimestampStr);
 			if (videoSeconds != null && clockSeconds != null) {
 				this.clockSyncPairs.push([videoSeconds, clockSeconds])			
 			}
@@ -254,28 +255,12 @@ export class DataRecorder extends HTMLElement {
 		this.#updateViewSquadList();
 	}
 
-	#parseTimestamp(text) {
-		var timeRegex = /(\d{2}):(\d{2}):(\d{2})/;
-		let match = timeRegex.exec(text);
-
-		if (match) {
-			var hours = parseInt(match[1], 10);
-			var minutes = parseInt(match[2], 10);
-			var seconds = parseInt(match[3], 10);
-
-			var totalTimeInSeconds = hours * 3600 + minutes * 60 + seconds;
-			return totalTimeInSeconds;
-		} else {
-			return null;
-		}
-	}
-
 	#deleteMostRecentTimestamp(time) {
 		let data = this.dataBox.value;
 		let lines = data.split("\n");
 		
 		for (let i = lines.length - 1; i >= 0; --i) {
-			let timestamp = this.#parseTimestamp(lines[i]);
+			let timestamp = Util.timestampToSeconds(lines[i]);
 			if (timestamp && timestamp <= time)	{
 				lines.splice(i, 1);
 				break;
@@ -296,10 +281,6 @@ export class DataRecorder extends HTMLElement {
 		this.selectedMateIndex = index;
 		this.selectedMateTimeMs = Date.now();
 		this.#updateViewSquadSelection();
-	}
-
-	#secondsToHHMMSS(seconds) {
-		return new Date(seconds * 1000).toISOString().slice(11, 19);
 	}
 
 	#onKeyDown(e) {
@@ -333,7 +314,7 @@ export class DataRecorder extends HTMLElement {
 		} else if (/^[a-zA-Z]$/.test(e.key) && e.key in this.dataEvents) {
 			let videoTime = document.getElementsByTagName("video-controller")[0].getCurrentTime();
 
-			let time = this.#secondsToHHMMSS(videoTime);
+			let time = Util.secondsToHHMMSS(videoTime);
 			let eventName = this.dataEvents[e.key] || "";
 			let mateName = this.#getMateName(this.selectedMateIndex);
 

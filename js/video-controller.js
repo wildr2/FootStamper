@@ -1,5 +1,6 @@
 import { defaultYtVideoId } from "./common.js"
-import { GameClock } from "./game-clock.js"
+import GameClock from "./game-clock.js"
+import ScoreWidgetController from "./score-widget-controller.js"
 import Util from "./util.js"
 
 export class VideoController extends HTMLElement {
@@ -16,6 +17,7 @@ export class VideoController extends HTMLElement {
 		this.showControlsCheckbox = document.getElementById("show-controls-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
 		this.gameClock = new GameClock(this.dataRecorder);
+		this.scoreWidgetController = new ScoreWidgetController(this.dataRecorder, this.gameClock);
 
 		this.overlayText = document.getElementsByClassName("overlay-text")[0];
 		this.overlayBg = document.getElementsByClassName("overlay-bg")[0];
@@ -352,10 +354,7 @@ export class VideoController extends HTMLElement {
 		return this.zoomLevel == this.minZoomLevel ? this.maxZoomLevel : this.minZoomLevel;
 	}
 
-	#animationStep(timeMS) {
-		const time = timeMS / 1000.0
-		const dt = time - this.prevAnimateTime
-
+	#updateCameraZoom(time, dt) {
 		let zoomTargetTargetScale = this.zoomLevel == this.maxZoomLevel ? this.maxZoomScale : this.minZoomScale;
 		let zoomTargetTargetOriginX = Util.map(this.minZoomPos, this.maxZoomPos, 0, 100, this.zoomPos);
 
@@ -377,6 +376,20 @@ export class VideoController extends HTMLElement {
 		this.zoomOriginX = Util.lerp(this.zoomOriginX, this.zoomTargetOriginX, lerpFactor);
 
 		this.#zoom(this.zoomScale, this.zoomOriginX);
+	}
+
+	#animationStep(timeMS) {
+		const time = timeMS / 1000.0
+		const dt = time - this.prevAnimateTime
+
+		if (!this.ytPlayerReady && this.usingYtPlayer()) {
+			this.prevAnimateTime = time;
+			requestAnimationFrame(this.#animationStep.bind(this));
+			return;
+		}
+
+		this.#updateCameraZoom(time, dt);
+		this.scoreWidgetController.update(this.getCurrentTime());
 
 		// Prevent player from stealing focus!
 		if (!this.allowFocusCheckbox.checked) {
@@ -385,7 +398,7 @@ export class VideoController extends HTMLElement {
 			}
 		}
 
-		// Seek to event completion / overlay text.
+		// Seek to event completion. Update Overlay text.
 		let overlayTextDuration = 1.5;
 		if (this.seekingToEvent) {
 			let timePastSeekTime = this.getCurrentTime() - this.eventSeekTime;

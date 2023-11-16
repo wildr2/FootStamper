@@ -1,5 +1,5 @@
 
-export class GameClock {
+class GameClock {
 	constructor(dataRecorder) {
 		this.dataRecorder = dataRecorder;
 	}
@@ -16,5 +16,8 @@ export class GameClock {
 				return pairs[i][1] - pairs[i][0]
 			}
 		}
+		return 0;
 	}
 }
+
+export default GameClock;

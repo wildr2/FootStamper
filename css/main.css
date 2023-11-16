@@ -153,14 +153,14 @@ table {
 .overlay-text {
 	position: absolute;
 	transform: translate(-50%, -50%);
-	z-index: 9;
+	z-index: 21;
 	top: 50%;
 	left: 50%;
 	font-size: 3em;
 	font-weight: bold;
 }
 .overlay-bg {
-	z-index: 8;
+	z-index: 20;
 	background-color: black;
 	position: absolute;
 	top: 0%;
@@ -174,8 +174,8 @@ table {
 /*---------------------------------------------------------------------------*/
 
 .squad {
-	top: 100px;
-	left: 30px;
+	top: 175px;
+	left: 235px;
 }
 .squad__list {
 	padding: 10px 40px 10px 40px;
@@ -197,8 +197,8 @@ table {
 /*---------------------------------------------------------------------------*/
 
 .databox {
-	top: 400px;
-	left: 30px;
+	top: 175px;
+	left: 20px;
 	font-size: 1em;
 }
 .databox__textarea {
@@ -216,7 +216,7 @@ table {
 .score-widget {
 	position: absolute;
 	transform: translate(0%, -50%);
-	z-index: 9;
+	z-index: 10;
 	top: 10%;
 	left: 3%;
 	font-family: Arial;
@@ -248,7 +248,7 @@ table {
 	margin: auto;
 	margin-right: -5px;
 	margin-left: -5px;
-	z-index: 9;
+	z-index: 11;
 	background-color: white;
 	box-shadow: 0px 0px 8px 0px #202020;
 }
@@ -295,7 +295,7 @@ table {
 
 .draggable {
 	position: absolute;
-	z-index: 9;
+	z-index: 30;
 	background: var(--color-popup-bg);
 	border: 1px solid var(--color-popup-border);
 	border-radius: 5px;
@@ -303,7 +303,7 @@ table {
 .draggable__handle {
 	padding: 5px;
 	cursor: move;
-	z-index: 10;
+	z-index: 31;
 	background-color: var(--color-popup-header);
 	border-bottom: 1px solid var(--color-popup-border);
 }
