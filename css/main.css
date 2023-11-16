@@ -214,6 +214,7 @@ table {
 /*---------------------------------------------------------------------------*/
 
 .score-widget {
+	display: block;
 	position: absolute;
 	transform: translate(0%, -50%);
 	z-index: 10;

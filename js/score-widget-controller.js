@@ -5,6 +5,7 @@ class ScoreWidgetController {
 		this.dataRecorder = dataRecorder;
 		this.gameClock = gameClock;
 
+		// this.widget = document.querySelector(".score-widget");
 		this.leftBox = document.querySelector(".score-widget__box--left");
 		this.rightBox = document.querySelector(".score-widget__box--right");
 		this.leftNameText = this.leftBox.querySelector(".score-widget__name");
@@ -12,6 +13,12 @@ class ScoreWidgetController {
 		this.leftScoreText = this.leftBox.querySelector(".score-widget__number");
 		this.rightScoreText = this.rightBox.querySelector(".score-widget__number");
 		this.clockText = document.querySelector(".score-widget__clock");
+	}
+
+	setVisible(visible) {
+		console.log("set vis " + visible);
+		let widget = document.querySelector(".score-widget");
+		widget.classList.toggle("hidden", !visible);
 	}
 
 	onConfigChanged(dataRecorder) {

@@ -15,6 +15,7 @@ export class VideoController extends HTMLElement {
 		this.hasShownFullscreenAlert = false;
 		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
 		this.showControlsCheckbox = document.getElementById("show-controls-checkbox");
+		this.showScoreWidgetCheckbox = document.getElementById("show-score-widget-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
 		this.gameClock = new GameClock();
 		this.scoreWidgetController = new ScoreWidgetController(this.dataRecorder, this.gameClock);
@@ -60,6 +61,10 @@ export class VideoController extends HTMLElement {
 
 		this.showControlsCheckbox.onchange = function() {
 			this.customPlayer.controls = this.showControlsCheckbox.checked;
+		}.bind(this);
+
+		this.showScoreWidgetCheckbox.onchange = function() {
+			this.scoreWidgetController.setVisible(this.showScoreWidgetCheckbox.checked);
 		}.bind(this);
 	}
 
