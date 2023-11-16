@@ -16,7 +16,7 @@ export class VideoController extends HTMLElement {
 		this.allowFocusCheckbox = document.getElementById("allow-focus-checkbox");
 		this.showControlsCheckbox = document.getElementById("show-controls-checkbox");
 		this.dataRecorder = document.getElementsByTagName("data-recorder")[0];
-		this.gameClock = new GameClock(this.dataRecorder);
+		this.gameClock = new GameClock();
 		this.scoreWidgetController = new ScoreWidgetController(this.dataRecorder, this.gameClock);
 
 		this.overlayText = document.getElementsByClassName("overlay-text")[0];
@@ -118,6 +118,12 @@ export class VideoController extends HTMLElement {
 	}
 
 	#onConfigChanged(dataRecorder) {
+		this.#updateVideoOnConfigChanged(dataRecorder);
+		this.gameClock.onConfigChanged(dataRecorder);
+		this.scoreWidgetController.onConfigChanged(dataRecorder);
+	}
+
+	#updateVideoOnConfigChanged(dataRecorder) {
 		// Youtube video.
 		let ytVideoId = dataRecorder.getYtVideoId();
 		if (ytVideoId) {

@@ -29,4 +29,8 @@ Events
 
 Clock
 	00:00:00, 00:00:00
-	00:45:00, 00:45:00`;
+	00:45:00, 00:45:00
+	
+Sides
+	SR, grey, black
+	PC, purple, #fff`;
