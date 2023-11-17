@@ -37,11 +37,13 @@ class ScoreWidgetController {
 			color1 = color1[0] == "#" ? color1 : Util.colorNameToHex(color1);
 			color2 = color2[0] == "#" ? color2 : Util.colorNameToHex(color2);
 			if (i == 1) {
-				this.setupLeftSide(name, color1, color2);
+				this.#setupLeftSide(name, color1, color2);
 			} else {
-				this.setupRightSide(name, color1, color2);
+				this.#setupRightSide(name, color1, color2);
 			}
 		}
+
+		this.#updateWidth();
 	}
 
 	onDataChanged(dataRecorder) {
@@ -73,17 +75,6 @@ class ScoreWidgetController {
 			return a[0] - b[0];
 		});
 	}
-	setupLeftSide(name, color1, color2) {
-		this.leftNameText.innerHTML = name;
-		this.leftBox.style.backgroundColor = color1;
-		this.leftNameText.style.color = color2;
-	}
-
-	setupRightSide(name, color1, color2) {
-		this.rightNameText.innerHTML = name;
-		this.rightBox.style.backgroundColor = color1;
-		this.rightNameText.style.color = color2;
-	}
 	
 	update(videoTime) {
 		this.clockText.innerHTML = Util.secondsToMMSS(this.gameClock.getTime(videoTime));
@@ -102,6 +93,28 @@ class ScoreWidgetController {
 			}
 		}
 		return score;
+	}
+	
+	#setupLeftSide(name, color1, color2) {
+		this.leftNameText.innerHTML = name;
+		this.leftBox.style.backgroundColor = color1;
+		this.leftNameText.style.color = color2;
+	}
+
+	#setupRightSide(name, color1, color2) {
+		this.rightNameText.innerHTML = name;
+		this.rightBox.style.backgroundColor = color1;
+		this.rightNameText.style.color = color2;
+	}
+
+	#updateWidth() {
+		const minMinNameWidth = 5;
+		let maxNameWidth = 0;
+		maxNameWidth = Math.max(maxNameWidth, Util.getTextWidth(this.leftNameText.innerHTML, Util.getCanvasFont(this.leftNameText)));
+		maxNameWidth = Math.max(maxNameWidth, Util.getTextWidth(this.rightNameText.innerHTML, Util.getCanvasFont(this.rightNameText)));
+		let minWidth = Math.max(minMinNameWidth, maxNameWidth);
+		this.leftNameText.style.minWidth = minWidth + "px";
+		this.rightNameText.style.minWidth = minWidth + "px";
 	}
 }
 

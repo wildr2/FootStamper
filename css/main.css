@@ -232,6 +232,7 @@ table {
 	display: flex;	
 	padding: 0px 5px 0px 5px;
 	height: 1.5em;
+	text-align: center;
 }
 .score-widget__box--left {
 	border-radius: 5px 0px 0px 5px;
