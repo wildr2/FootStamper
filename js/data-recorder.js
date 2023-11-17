@@ -15,7 +15,7 @@ export class DataRecorder extends HTMLElement {
 		this.config2Button = document.getElementsByClassName("title-section__config-button-2")[0];
 		this.browseVideoInput = document.getElementsByClassName("title-section__browse-video-input")[0]
 		this.dataBox = document.getElementsByClassName("databox__textarea")[0];
-		this.showOverlayCheckbox = document.getElementById("show-overlay-checkbox");
+		this.showDataOverlayCheckbox = document.getElementById("show-data-data-overlay-checkbox");
 		this.videoController = document.getElementsByTagName("video-controller")[0];
 		// args: dataRecorder
 		this.configChangedCallbacks = [];
@@ -72,11 +72,14 @@ export class DataRecorder extends HTMLElement {
 
 		this.config1Button.onclick = () => this.#applyConfigTemplate(1);
 		this.config2Button.onclick = () => this.#applyConfigTemplate(2);
-		this.showOverlayCheckbox.onchange = this.#onOptionsChanged.bind(this);
+		this.showDataOverlayCheckbox.onchange = this.#onOptionsChanged.bind(this);
 		this.#initBrowseVideoInput();
 		
 		// Handle manual data changes.
 		this.dataBox.onchange = this.#onDataChanged.bind(this);
+
+		// Handle initial options.
+		this.#onOptionsChanged();
 	}
 
 	#initConfigBox() {
@@ -358,12 +361,12 @@ export class DataRecorder extends HTMLElement {
 		}
 
 		let squad = document.getElementsByClassName("squad")[0];
-		let showOverlay = this.showOverlayCheckbox.checked
+		let showOverlay = this.showDataOverlayCheckbox.checked
 		squad.classList.toggle("hidden", this.squadmates.length == 0 || !showOverlay);
 	}
 
 	#updateViewDataBox() {
-		let showOverlay = this.showOverlayCheckbox.checked
+		let showOverlay = this.showDataOverlayCheckbox.checked
 		let dataBox = document.getElementsByClassName("databox")[0];
 		dataBox.classList.toggle("hidden", !showOverlay);
 	}

@@ -24,8 +24,8 @@ Clock
 	00:00:00, 00:00:00
 	00:45:00, 00:45:00
 Sides
-	GER, #111, #ddd
-	GRE, #eee, black`;
+	GER, #221f25, lightgrey
+	GRE, #eee9de, black`;
 
 export const configTemplate2 = 
 `https://www.youtube.com/watch?v=LfduUFF_i1A
@@ -37,5 +37,5 @@ Clock
 	00:00:00, 00:00:00
 	00:45:00, 00:45:00
 Sides
-	GER, #111, #ddd
-	GRE, #eee, black`;
+	GER, #221f25, lightgrey
+	GRE, #eee9de, black`;

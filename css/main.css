@@ -150,7 +150,7 @@ table {
 	width: 100%;
 	height: 100vh;
 }
-.overlay-text {
+.data-overlay-text {
 	position: absolute;
 	transform: translate(-50%, -50%);
 	z-index: 21;
@@ -159,7 +159,7 @@ table {
 	font-size: 3em;
 	font-weight: bold;
 }
-.overlay-bg {
+.data-overlay-bg {
 	z-index: 20;
 	background-color: black;
 	position: absolute;
@@ -235,7 +235,7 @@ table {
 }
 .score-widget__box--left {
 	border-radius: 5px 0px 0px 5px;
-	background-color: #EEE;
+	background-color: white;
 	color: black;
 }
 .score-widget__box--right {

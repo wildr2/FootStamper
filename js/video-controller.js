@@ -20,8 +20,8 @@ export class VideoController extends HTMLElement {
 		this.gameClock = new GameClock();
 		this.scoreWidgetController = new ScoreWidgetController(this.gameClock);
 
-		this.overlayText = document.getElementsByClassName("overlay-text")[0];
-		this.overlayBg = document.getElementsByClassName("overlay-bg")[0];
+		this.overlayText = document.getElementsByClassName("data-overlay-text")[0];
+		this.overlayBg = document.getElementsByClassName("data-overlay-bg")[0];
 		this.showOverlayTextTime = -1;
 		this.seekingToEvent = false;
 		this.eventSeekTime = -1;
@@ -52,10 +52,6 @@ export class VideoController extends HTMLElement {
 		// Animation.
 		requestAnimationFrame(this.#animationStep.bind(this));
 
-		// Handle config changes.
-		this.dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
-		this.dataRecorder.subscribeDataChanged(this.#onDataChanged.bind(this));
-
 		addEventListener("keypress", this.#onKeyPress.bind(this));
 		addEventListener("keydown", this.#onKeyDown.bind(this));
 		document.addEventListener('fullscreenchange', this.#onFullscreenChanged.bind(this));
@@ -67,6 +63,13 @@ export class VideoController extends HTMLElement {
 		this.showScoreWidgetCheckbox.onchange = function() {
 			this.scoreWidgetController.setVisible(this.showScoreWidgetCheckbox.checked);
 		}.bind(this);
+
+		// Handle config changes.
+		this.dataRecorder.subscribeConfigChanged(this.#onConfigChanged.bind(this));
+		this.dataRecorder.subscribeDataChanged(this.#onDataChanged.bind(this));
+
+		// Handle initial config.
+		this.#onConfigChanged(this.dataRecorder);
 	}
 
 	#initYTPlayer() {
@@ -131,6 +134,7 @@ export class VideoController extends HTMLElement {
 		this.#updateVideoOnConfigChanged(dataRecorder);
 		this.gameClock.onConfigChanged(dataRecorder);
 		this.scoreWidgetController.onConfigChanged(dataRecorder);
+		this.scoreWidgetController.setVisible(this.showScoreWidgetCheckbox.checked);
 	}
 
 	#updateVideoOnConfigChanged(dataRecorder) {

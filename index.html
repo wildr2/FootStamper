@@ -44,8 +44,8 @@ Clock
 	00:00:00, 00:00:00
 	00:45:00, 00:45:00
 Sides
-	GER, #111, #ddd
-	GRE, #eee, black</textarea>
+	GER, #221f25, lightgrey
+	GRE, #eee9de, black</textarea>
 			<br>
 			<div class="title-section__config-buttons">
 				<span>
@@ -109,7 +109,7 @@ Sides
 			<br>
 
 			<label>
-				<input id="show-overlay-checkbox" type="checkbox" checked="checked"> Data&nbsp;
+				<input id="show-data-data-overlay-checkbox" type="checkbox" checked="checked"> Data&nbsp;
 			</label>
 			<label>
 				<input id="show-score-widget-checkbox" type="checkbox" checked="checked"> Score/Clock&nbsp;
@@ -129,30 +129,30 @@ Sides
 			<div id="player" class="video-section__player"></div>
 			<video class="video-section__custom-player hidden" controls autoplay></video>
 		</video-controller>
-		<div class="squad draggable">
+		<div class="squad draggable hidden">
 			<div class="draggable__handle">Squad</div>
 			<ol class="squad__list"></ol>
 		</div>
-		<div class="databox draggable">
+		<div class="databox draggable hidden">
 			<div class="draggable__handle">Data</div>
 			<textarea class="databox__textarea" spellcheck="false"></textarea>
 		</div>
-		<div class="overlay-text hidden">19'</div>
-		<div class="overlay-bg hidden"></div>
+		<div class="data-overlay-text hidden">19'</div>
+		<div class="data-overlay-bg hidden"></div>
 
-		<div class="score-widget">
+		<div class="score-widget hidden">
 			<div class="score-widget__row">
 				<div class="score-widget__box score-widget__box--left">
-					<div class="score-widget__name">SR</div>
-					<div class="score-widget__number score-widget__number--left">1</div>
+					<div class="score-widget__name">GRE</div>
+					<div class="score-widget__number score-widget__number--left">0</div>
 				</div>
 				<div class="score-widget__divider"></div>
 				<div class="score-widget__box score-widget__box--right">
 					<div class="score-widget__number score-widget__number--right">0</div>
-					<div class="score-widget__name">PC</div>
+					<div class="score-widget__name">GER</div>
 				</div>
 			</div>
-			<div class="score-widget__clock">13:43</div>
+			<div class="score-widget__clock">00:00</div>
 		</div>
 	</div>
 	<script>
